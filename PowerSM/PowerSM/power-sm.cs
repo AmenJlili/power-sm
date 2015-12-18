@@ -5,10 +5,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
+using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swcommands;
+using SolidWorks.Interop.swconst;
+using SolidWorks.Interop.swpublished;
 
 namespace PowerSM
 {
-    public static class PowerSM: IswAddin
+    public class PowerSM: SwAddin
     {
         /* 
            Select the target platform to 64 bit processor under the build tab
@@ -18,7 +22,7 @@ namespace PowerSM
         private int Cookie;
         public SldWorks swApp;
 
-        private void ConnectoToSW(int SessionCookie, object swAppObj)
+        public bool ConnectToSW(object swAppObj, int SessionCookie)
         {
             swApp = (SldWorks)swAppObj;
             Cookie = SessionCookie;
@@ -27,9 +31,10 @@ namespace PowerSM
             return true;
         }
 
-        private void DisconnectFromSW()
+        public bool DisconnectFromSW()
         {
             GC.Collect();
+            return true;
         }
 
         [ComRegisterFunction()]
