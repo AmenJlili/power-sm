@@ -5,9 +5,10 @@ Power-sm is under developement.
 # About:
 
 Power-SM ,short for Power-Sheet Metal, is C# COM Add-in for SolidWorks 64 bits.
-The main purpose of this add-in to perform tedious operations over hundreds of Sheet Metal CAD files and let Mechancial Design Engineer focus on the design.
 
-Many Sheet Metal Design Engineers are faced with cumbersome tasks of modifying hundreds of Sheet Metak CAD files especially in mass-manufacturing environment.
+<p align="justify">The main purpose of this add-in to perform tedious operations over hundreds of Sheet Metal CAD files and let Mechancial Design Engineer focus on the design.
+
+Many Sheet Metal Design Engineers are faced with cumbersome tasks of modifying hundreds of Sheet Metak CAD files especially in mass-manufacturing environment.</p>
 
 The main functionalities will allow users to:
 
@@ -20,7 +21,7 @@ The main functionalities will allow users to:
 
 # Notes to developers
 
-You need SolidWorks interop assemblies to build. More information on where to find them <a href="http://help.solidworks.com/2015/English/api/sldworksapiprogguide/Welcome.htm"> here</a>. The recommended solidworks assemblies can be at this directory (install_dir\api\redist)
+You need SolidWorks interop assemblies to build. More information on where to find them <a href="http://help.solidworks.com/2015/English/api/sldworksapiprogguide/Welcome.htm"> here</a>. The recommended solidworks assemblies can be found at this directory (install_dir\api\redist)
 
 # Notes to "hungry" end-users
 
