@@ -18,10 +18,10 @@ The main functionalities will allow users to:
 - Generate CSV of custom properties
 
 
-# Notes developers
+# Notes to developers
 
-- You need SolidWorks interop assemblies to build. More information on where to find them <a href="http://help.solidworks.com/2015/English/api/sldworksapiprogguide/Welcome.htm"> here</a>. The recommended solidworks assemblies can be at this directory (install_dir\api\redist)
+You need SolidWorks interop assemblies to build. More information on where to find them <a href="http://help.solidworks.com/2015/English/api/sldworksapiprogguide/Welcome.htm"> here</a>. The recommended solidworks assemblies can be at this directory (install_dir\api\redist)
 
-# Notes for End-users
+# Notes to "hungry" end-users
 
 If you are looking to install this add-in on the fly, a installshield deployer will linked here in the future.
