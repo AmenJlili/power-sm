@@ -1,6 +1,5 @@
-# power-sm Add-in for SolidWorks 64 bits
-
-# Power-sm is under developement.
+power-sm Add-in for SolidWorks 64 bits
+Power-sm is under developement.
 
 # About:
 
@@ -16,3 +15,12 @@ The main functionalities will allow users to:
 - Add Custom properties
 - Extract custom properties
 - Generate CSV of custom properties
+
+
+# Notes developers
+
+- You need SolidWorks References to build. More information on where to find them <a href="http://help.solidworks.com/2015/English/api/sldworksapiprogguide/Welcome.htm"> here</a>.
+
+# Notes for End-users
+
+If you are looking to install this add-in on the fly, a installshield deployer will linked here in the future.
