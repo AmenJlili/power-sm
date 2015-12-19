@@ -32,13 +32,14 @@ namespace PowerSM
         {
             swApp = (SldWorks)swAppObj;
             AddInCookie = SessionCookie;
-            bool result = swApp.SetAddinCallbackInfo(0, this, AddInCookie);
+            swApp.SetAddinCallbackInfo(0, this, AddInCookie);
             BuildMenu();
             return true;
         }
 
         public bool DisconnectFromSW()
         {
+            DestroyMenu();
             GC.Collect();
             return true;
         }
@@ -49,7 +50,7 @@ namespace PowerSM
         [ComRegisterFunction()]
         private static void RegisterAssembly(Type t)
         {
-            string KeyPath = string.Format(@"\SOFTWARE\SolidWorks\AddIns\{0:b}", t.GUID);
+            string KeyPath = string.Format(@"SOFTWARE\SolidWorks\AddIns\{0:b}", t.GUID);
             RegistryKey rk = Registry.LocalMachine.CreateSubKey(KeyPath);
             rk.SetValue(null, 1); // 1: Add-in will load at start-up
             rk.SetValue("Title", "Power-SM"); // Title
@@ -59,7 +60,7 @@ namespace PowerSM
         [ComUnregisterFunction()]
         private static void UnRegisterAssembly(Type t)
         {
-            string KeyPath = string.Format(@"\Software\SolidWorks\Addins\{0:b}", t.GUID);
+            string KeyPath = string.Format(@"Software\SolidWorks\Addins\{0:b}", t.GUID);
             Registry.LocalMachine.DeleteSubKey(KeyPath);
         }
         
@@ -68,28 +69,28 @@ namespace PowerSM
         #region UIMethod
         private void BuildMenu()
         {
-            int result;
-            int DocType = (int)swDocTemplateTypes_e.swDocTemplateTypeNONE;
-            result = swApp.AddMenu(DocType, "PowerSM", 1);
-            result = swApp.AddMenuItem4(DocType, AddInCookie, "Power Radi Tool", 0, "RadiToolMethod", null, "Power Radi Tool", "");
+           
+            int DocType = (int)swDocumentTypes_e.swDocNONE;
+            swApp.AddMenu(DocType, "PowerSM", 1);
+            swApp.AddMenuItem4(DocType, AddInCookie, "Power Radi Tool@PowerSM", 1, "RadiToolMethod", "3", "Power Radi Tool", "");
 
         }
         private void DestroyMenu()
         {
-            bool result;
-            int DocType = (int)swDocTemplateTypes_e.swDocTemplateTypeNONE;
-            result = swApp.RemoveMenu(DocType, "Power Radi Tool@PowerSM", "RadiToolMethod");
-            if (result == false)
-                ErrorEchoer.ShowErrorMessageBox((int)PowerSMEnums.Errors_e.UnloadMenuError);
+          
+            int DocType = (int)swDocumentTypes_e.swDocNONE;
+            swApp.RemoveMenu(DocType, "PowerSM", "RadiToolMethod");
+            swApp.RemoveMenu(DocType, "Power Radi Tool@PowerSM", "RadiToolMethod");
 
         }
         #endregion
 
         #region Add-in Implementation
-        private void RadiToolMethod()
+        // Callback menu methods must be public, otherwise call from menu item failed 
+        public void RadiToolMethod()
         {
-            Power_SM_Form form = new Power_SM_Form(swApp);
-            form.ShowDialog();
+            Power_SM_Form f = new Power_SM_Form(swApp);
+            f.ShowDialog();
         }
         #endregion
 
