@@ -1,4 +1,5 @@
 power-sm Add-in for SolidWorks 64 bits
+
 Power-sm is under developement.
 
 # About:
@@ -19,7 +20,7 @@ The main functionalities will allow users to:
 
 # Notes developers
 
-- You need SolidWorks References to build. More information on where to find them <a href="http://help.solidworks.com/2015/English/api/sldworksapiprogguide/Welcome.htm"> here</a>.
+- You need SolidWorks interop assemblies to build. More information on where to find them <a href="http://help.solidworks.com/2015/English/api/sldworksapiprogguide/Welcome.htm"> here</a>. The recommended solidworks assemblies can be at this directory (install_dir\api\redist)
 
 # Notes for End-users
 
