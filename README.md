@@ -21,7 +21,7 @@ The main functionalities will allow users to:
 
 # Notes to developers
 
-You need SolidWorks interop assemblies to build. More information on where to find them <a href="http://help.solidworks.com/2015/English/api/sldworksapiprogguide/Welcome.htm"> here</a>. The recommended solidworks assemblies can be found at this directory (install_dir\api\redist)
+<p align="justify">You need SolidWorks interop assemblies to build. More information on where to find them <a href="http://help.solidworks.com/2015/English/api/sldworksapiprogguide/Welcome.htm"> here</a>. The recommended solidworks assemblies can be found at this directory (install_dir\api\redist)</p>
 
 # Notes to "hungry" end-users
 
