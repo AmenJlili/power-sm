@@ -49,7 +49,7 @@ namespace PowerSM
         [ComRegisterFunction()]
         private static void RegisterAssembly(Type t)
         {
-            string KeyPath = string.Format(@"\SOFTWARE\SolidWorks\AddIns\{0:b}", t.GUID);
+            string KeyPath = string.Format(@"SOFTWARE\SolidWorks\AddIns\{0:b}", t.GUID);
             RegistryKey rk = Registry.LocalMachine.CreateSubKey(KeyPath);
             rk.SetValue(null, 1); // 1: Add-in will load at start-up
             rk.SetValue("Title", "Power-SM"); // Title
@@ -59,7 +59,7 @@ namespace PowerSM
         [ComUnregisterFunction()]
         private static void UnRegisterAssembly(Type t)
         {
-            string KeyPath = string.Format(@"\Software\SolidWorks\Addins\{0:b}", t.GUID);
+            string KeyPath = string.Format(@"Software\SolidWorks\Addins\{0:b}", t.GUID);
             Registry.LocalMachine.DeleteSubKey(KeyPath);
         }
         
