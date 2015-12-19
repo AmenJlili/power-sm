@@ -1,6 +1,6 @@
-﻿using System;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using PowerSM;
+
 
 namespace Power_SM_Unit_Test
 {
@@ -8,9 +8,11 @@ namespace Power_SM_Unit_Test
     public class UnitTest1
     {
         [TestMethod]
-        public void TestMethod1()
+        public void TestMethod()
         {
-          
+            Power_SM_Form form = new Power_SM_Form();
+            form.ShowDialog();
+            
         }
     }
 }

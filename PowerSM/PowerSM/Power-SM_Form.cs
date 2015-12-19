@@ -7,19 +7,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using SolidWorks.Interop.sldworks;
+using SolidWorks.Interop.swcommands;
+using SolidWorks.Interop.swconst;
+using SolidWorks.Interop.swpublished;
 
 namespace PowerSM
 {
     public partial class Power_SM_Form : Form
     {
-        public Power_SM_Form()
+        SldWorks swApp;
+        public Power_SM_Form(SldWorks swApp_)
         {
             InitializeComponent();
+            swApp = swApp_;
         }
 
         private void Power_SM_Form_Load(object sender, EventArgs e)
         {
-
+          
         }
 
         private void BrowseForFolderButton_Click(object sender, EventArgs e)
