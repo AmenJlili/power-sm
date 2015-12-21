@@ -11,12 +11,15 @@ using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swcommands;
 using SolidWorks.Interop.swconst;
 using SolidWorks.Interop.swpublished;
-
+using System.IO;
 namespace PowerSM
 {
     public partial class Power_SM_Form : Form
     {
+        string CurrentDirectory;
         SldWorks swApp;
+        List<FileNodeElement> TreeViewFiles; 
+      
         public Power_SM_Form(SldWorks swApp_)
         {
             InitializeComponent();
@@ -25,23 +28,93 @@ namespace PowerSM
 
         private void Power_SM_Form_Load(object sender, EventArgs e)
         {
-          
+            // Load icons for tree view 
+            var rm = new System.Resources.ResourceManager("PowerSM.Properties.Resources",System.Reflection.Assembly.GetExecutingAssembly());
+            Bitmap part = (Bitmap)rm.GetObject("part_png");
+            Bitmap folder = (Bitmap)rm.GetObject("folder_png");
+
+            FilesTreeView.ImageList = new ImageList();
+
+            FilesTreeView.ImageList.Images.Add(part);
+            FilesTreeView.ImageList.Images.Add(folder);
         }
 
+        #region Browse for files
         private void BrowseForFolderButton_Click(object sender, EventArgs e)
         {
             InitiateOpenFolder();
+          
         }
 
-        /*
-         * modifier is public for testing purposes
-         */
-
-        public void InitiateOpenFolder() 
+        private void InitiateOpenFolder() 
         {
             FolderBrowserDialog FolderBrowser = new FolderBrowserDialog();
+            FolderBrowser.ShowDialog();
+
             if (!string.IsNullOrEmpty(FolderBrowser.SelectedPath))
-           SourceFolderTextBox.Text = FolderBrowser.SelectedPath;
+            {
+                CurrentDirectory = FolderBrowser.SelectedPath;
+                TreeViewFiles = new List<FileNodeElement>();
+                ListDirectory(FilesTreeView, CurrentDirectory);
+            }
+        }
+
+        private void ListDirectory(TreeView treeView, string path)
+        {
+            treeView.Nodes.Clear();
+            var rootDirectoryInfo = new DirectoryInfo(path); 
+           treeView.Nodes.Add(CreateDirectoryNode(rootDirectoryInfo));
+        }
+
+        private TreeNode CreateDirectoryNode(DirectoryInfo directoryInfo)
+        {
+            List<string> FileExtensions = new List<string>();
+            FileExtensions.AddRange(new[] { "SLDPRT", "sldprt" });
+
+            var directoryNode = new TreeNode(directoryInfo.Name,1,1);
+
+            foreach (var directory in directoryInfo.GetDirectories())
+
+                if (!directory.Attributes.HasFlag(FileAttributes.Hidden))
+                    directoryNode.Nodes.Add(CreateDirectoryNode(directory));
+
+            foreach (var file in directoryInfo.GetFiles())
+            {
+                if (FileExtensions.Any(x => file.Extension.Contains(x)))
+                {
+                    directoryNode.Nodes.Add(new TreeNode(file.Name, 0, 0));
+
+                    TreeViewFiles.Add(new FileNodeElement()
+                    {
+                      FullName = file.FullName,
+                      Name = file.Name
+                    });
+                }
+            }
+            return directoryNode;
+        }
+        #endregion
+
+        private void StartButton_Click(object sender, EventArgs e)
+        {
+            
+            
+        }
+
+   // private async Task<string[]> ChangeRadiusAsync(string filename) {}
+     
+    }
+
+    public static class TestArea
+    {
+        public static void Method()
+        {
+
         }
     }
+    public class FileNodeElement
+    {
+        public string FullName { get; set; }
+        public string Name { get; set; }
+    } 
 }

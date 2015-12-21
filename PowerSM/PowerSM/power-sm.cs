@@ -86,7 +86,7 @@ namespace PowerSM
         #endregion
 
         #region Add-in Implementation
-        // Callback menu methods must be public, otherwise call from menu item failed 
+        // Callback methods must be public, otherwise call from menu item fails 
         public void RadiToolMethod()
         {
             Power_SM_Form f = new Power_SM_Form(swApp);
