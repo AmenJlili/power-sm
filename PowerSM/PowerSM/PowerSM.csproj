@@ -34,23 +34,23 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="SolidWorks.Interop.sldworks">
-      <HintPath>..\..\..\..\Desktop\swdlls\SolidWorks.Interop.sldworks.dll</HintPath>
+      <HintPath>..\..\..\..\..\Desktop\swdlls\SolidWorks.Interop.sldworks.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="SolidWorks.Interop.swcommands">
-      <HintPath>..\..\..\..\Desktop\swdlls\SolidWorks.Interop.swcommands.dll</HintPath>
+      <HintPath>..\..\..\..\..\Desktop\swdlls\SolidWorks.Interop.swcommands.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="SolidWorks.Interop.swconst">
-      <HintPath>..\..\..\..\Desktop\swdlls\SolidWorks.Interop.swconst.dll</HintPath>
+      <HintPath>..\..\..\..\..\Desktop\swdlls\SolidWorks.Interop.swconst.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="SolidWorks.Interop.swpublished">
-      <HintPath>..\..\..\..\Desktop\swdlls\SolidWorks.Interop.swpublished.dll</HintPath>
+      <HintPath>..\..\..\..\..\Desktop\swdlls\SolidWorks.Interop.swpublished.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </Reference>
     <Reference Include="solidworkstools">
-      <HintPath>..\..\..\..\Desktop\swdlls\solidworkstools.dll</HintPath>
+      <HintPath>..\..\..\..\..\Desktop\swdlls\solidworkstools.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

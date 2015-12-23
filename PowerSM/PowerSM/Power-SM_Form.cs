@@ -18,13 +18,21 @@ namespace PowerSM
     {
         string CurrentDirectory;
         SldWorks swApp;
-        List<FileNodeElement> TreeViewFiles; 
+        List<FileNodeElement> TreeViewFiles;
+        List<string> swSheetMetalFeatureTypes;
       
         public Power_SM_Form(SldWorks swApp_)
         {
             InitializeComponent();
             swApp = swApp_;
         }
+        enum TreeViewIcons
+        {
+            directory = 1,
+            file = 0
+        }
+
+        #region UI methods
 
         private void Power_SM_Form_Load(object sender, EventArgs e)
         {
@@ -37,6 +45,17 @@ namespace PowerSM
 
             FilesTreeView.ImageList.Images.Add(part);
             FilesTreeView.ImageList.Images.Add(folder);
+            // Add SheetMetalFeature types
+            swSheetMetalFeatureTypes = new List<string>();
+            swSheetMetalFeatureTypes.AddRange(new[] {"SMBaseFlange",
+                                                    "EdgeFlange",
+                                                    "SMBaseFlange",
+                                                    "SketchedBend",
+                                                    "SheetMetal",
+                                                    "OneBend",
+                                                    "SMMiteredFlange",
+                                                    "Jog",
+                                                    "Bends"});
         }
 
         #region Browse for files
@@ -71,7 +90,7 @@ namespace PowerSM
             List<string> FileExtensions = new List<string>();
             FileExtensions.AddRange(new[] { "SLDPRT", "sldprt" });
 
-            var directoryNode = new TreeNode(directoryInfo.Name,1,1);
+            var directoryNode = new TreeNode(directoryInfo.Name,(int)TreeViewIcons.directory, (int)TreeViewIcons.directory);
 
             foreach (var directory in directoryInfo.GetDirectories())
 
@@ -82,7 +101,7 @@ namespace PowerSM
             {
                 if (FileExtensions.Any(x => file.Extension.Contains(x)))
                 {
-                    directoryNode.Nodes.Add(new TreeNode(file.Name, 0, 0));
+                    directoryNode.Nodes.Add(new TreeNode(file.Name, (int)TreeViewIcons.file, (int)TreeViewIcons.file));
 
                     TreeViewFiles.Add(new FileNodeElement()
                     {
@@ -94,18 +113,60 @@ namespace PowerSM
             return directoryNode;
         }
         #endregion
-
+           
         private void StartButton_Click(object sender, EventArgs e)
         {
             
             
         }
 
-   // private async Task<string[]> ChangeRadiusAsync(string filename) {}
-     
-    }
+        #endregion
 
-    public static class TestArea
+        #region Change radius methods
+        // Untested
+        private bool ChangeRadius(string filename, double radius)
+        {
+            int Errors = 0;
+            ModelDoc2 swModelDoc;
+            try
+            {
+                swModelDoc = swApp.OpenDocSilent(filename, (int)swDocumentTypes_e.swDocPART, ref Errors);
+
+                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
+                var swFeatures = swFeatureManager.GetFeatures(false);
+                foreach (Feature swFeature in swFeatures)
+                {
+                    var swSheetMetalDataFeature = swSheetMetalFeatureTypes.Exists(x => x == swFeature.GetTypeName()) ? swFeature : null;
+                    if (swSheetMetalDataFeature == null)
+                        continue;
+                    if (swSheetMetalDataFeature is SheetMetalFeatureData)
+                    {
+                        SheetMetalFeatureData _swSheetMetalDataFeature = (SheetMetalFeatureData)swSheetMetalDataFeature;
+                        _swSheetMetalDataFeature.SetOverrideDefaultParameter(true);
+                    }
+
+                    if (swSheetMetalDataFeature is BaseFlangeFeatureData)
+                    {
+                        BaseFlangeFeatureData _swBaseFlangeDataFeature = (BaseFlangeFeatureData)swSheetMetalDataFeature;
+                        _swBaseFlangeDataFeature.OverrideRadius = true;
+                    }
+
+                    Type swSheetMetalDataFeatureType = swSheetMetalDataFeature.GetType();
+                    var swSheetMetalDataFeatureRadiusProperty = swSheetMetalDataFeatureType.GetProperty("BendRadius");
+                    swSheetMetalDataFeatureRadiusProperty.SetValue(swSheetMetalDataFeature, radius);
+                   
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+        #endregion
+
+
+        public static class TestArea
     {
         public static void Method()
         {
