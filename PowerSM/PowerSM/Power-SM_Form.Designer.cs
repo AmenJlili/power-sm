@@ -35,7 +35,7 @@
             this.NewRadiusLabel = new System.Windows.Forms.Label();
             this.MeasurementSystemLabel = new System.Windows.Forms.Label();
             this.MeasurementSystemCombBox = new System.Windows.Forms.ComboBox();
-            this.RadiusComboBox = new System.Windows.Forms.TextBox();
+            this.RadiusTextBox = new System.Windows.Forms.TextBox();
             this.progressBar = new System.Windows.Forms.ProgressBar();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
@@ -93,7 +93,7 @@
             this.SheetMetalDataGroupBox.Controls.Add(this.NewRadiusLabel);
             this.SheetMetalDataGroupBox.Controls.Add(this.MeasurementSystemLabel);
             this.SheetMetalDataGroupBox.Controls.Add(this.MeasurementSystemCombBox);
-            this.SheetMetalDataGroupBox.Controls.Add(this.RadiusComboBox);
+            this.SheetMetalDataGroupBox.Controls.Add(this.RadiusTextBox);
             this.SheetMetalDataGroupBox.Location = new System.Drawing.Point(15, 245);
             this.SheetMetalDataGroupBox.Name = "SheetMetalDataGroupBox";
             this.SheetMetalDataGroupBox.Size = new System.Drawing.Size(377, 41);
@@ -131,12 +131,12 @@
             this.MeasurementSystemCombBox.TabIndex = 1;
             this.MeasurementSystemCombBox.Text = "MMGS";
             // 
-            // RadiusComboBox
+            // RadiusTextBox
             // 
-            this.RadiusComboBox.Location = new System.Drawing.Point(77, 16);
-            this.RadiusComboBox.Name = "RadiusComboBox";
-            this.RadiusComboBox.Size = new System.Drawing.Size(65, 20);
-            this.RadiusComboBox.TabIndex = 0;
+            this.RadiusTextBox.Location = new System.Drawing.Point(77, 16);
+            this.RadiusTextBox.Name = "RadiusTextBox";
+            this.RadiusTextBox.Size = new System.Drawing.Size(65, 20);
+            this.RadiusTextBox.TabIndex = 0;
             // 
             // progressBar
             // 
@@ -252,7 +252,6 @@
             this.toolStripContainer1.ContentPanel.Controls.Add(this.BrowseForFolderButton);
             this.toolStripContainer1.ContentPanel.Controls.Add(this.FilesTreeGroupBox);
             this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(496, 357);
-            this.toolStripContainer1.ContentPanel.Load += new System.EventHandler(this.toolStripContainer1_ContentPanel_Load);
             this.toolStripContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.toolStripContainer1.LeftToolStripPanelVisible = false;
             this.toolStripContainer1.Location = new System.Drawing.Point(0, 0);
@@ -301,7 +300,7 @@
         private System.Windows.Forms.GroupBox SheetMetalDataGroupBox;
         private System.Windows.Forms.Label MeasurementSystemLabel;
         private System.Windows.Forms.ComboBox MeasurementSystemCombBox;
-        private System.Windows.Forms.TextBox RadiusComboBox;
+        private System.Windows.Forms.TextBox RadiusTextBox;
         private System.Windows.Forms.ProgressBar progressBar;
         private System.Windows.Forms.Label NewRadiusLabel;
         private System.Windows.Forms.StatusStrip statusStrip;

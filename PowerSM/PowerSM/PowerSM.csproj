@@ -72,6 +72,7 @@
     <Compile Include="Power-SM_Form.Designer.cs">
       <DependentUpon>Power-SM_Form.cs</DependentUpon>
     </Compile>
+    <Compile Include="PowerSMEnums.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>

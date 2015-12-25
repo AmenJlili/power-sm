@@ -97,11 +97,4 @@ namespace PowerSM
     } 
 }
 
-namespace PowerSMEnums
-{
-    enum Errors_e
-    {
-        UnloadMenuError=1,
 
-    }
-}

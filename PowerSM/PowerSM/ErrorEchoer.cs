@@ -9,12 +9,15 @@ namespace PowerSM
 {
    public static class ErrorEchoer
     { 
-        public static void ShowErrorMessageBox(int ErrorEnum)
+        public static void Err(int ErrorEnum)
         {
             switch (ErrorEnum)
             {
                 case 1: 
-                    EchoMessage("Cannot deleted Menu on Add-in unload.");
+                    EchoMessage("Cannot delete Menu on Add-in unload.");
+                    break;
+                case 2:
+                    EchoMessage("Incorrect radius value.");
                     break;
                 default:
                     break;
