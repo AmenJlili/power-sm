@@ -23,8 +23,8 @@ namespace PowerSMUnitTest
                                                     "SMMiteredFlange",
                                                     "Jog",
                                                     "Bends"});
-            var swApp = (SldWorks)Marshal.GetActiveObject("SolidWorks.Appliation");
-            PowerSM.Power_SM_Form.TestArea.ChangeRadius(swApp,"", 1.5, swSheetMetalFeatureTypes);
+            var swApp = (SldWorks)Activator.CreateInstance(Type.GetTypeFromProgID("SldWorks.Application"));
+            PowerSM.Power_SM_Form.TestArea.ChangeRadius(swApp, @"C:\Users\JLILI\Desktop\good moning christina\Part1.SLDPRT", 6.0, swSheetMetalFeatureTypes);
             
 
         }
