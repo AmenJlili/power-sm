@@ -13,11 +13,14 @@ namespace PowerSM
         {
             switch (ErrorEnum)
             {
+                case 0:
+                    EchoMessage("Incorrect radius value.");
+                    break;
                 case 1: 
                     EchoMessage("Cannot delete Menu on Add-in unload.");
                     break;
                 case 2:
-                    EchoMessage("Incorrect radius value.");
+                    EchoMessage("Cannot write log file.");
                     break;
                 default:
                     break;

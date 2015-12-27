@@ -16,8 +16,9 @@ namespace PowerSM
 
         public enum Errors
         {
-            Cannot_delete_menu = 0,
-            Cannot_parse_radius_value = 1
+            Cannot_parse_radius_value = 0,
+            Cannot_delete_menu = 1,
+            Cannot_Write_Log_File = 2
         }
     }
 }

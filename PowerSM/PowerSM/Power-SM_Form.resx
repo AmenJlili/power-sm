@@ -126,4 +126,29 @@
   <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
     <value>25</value>
   </metadata>
+  <assembly alias="System.Drawing" name="System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a" />
+  <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+    <value>
+        AAABAAEAEBAAAAAAIABoBAAAFgAAACgAAAAQAAAAIAAAAAEAIAAAAAAAQAQAAAAAAAAAAAAAAAAAAAAA
+        AACXlZP/rKmn/6upp/+rqaf/q6mn/6upp/+rqaf/q6mn/6upp/+rqaf/q6mn/6upp/+rqaf/q6mn/6yp
+        p/+XlZP/rKmn/+bj4f/l4t//5eLf/+Xi3//l4t//5eLf/+Xi3//l4t//5eLf/+Xi3//l4t//5eLf/+Xi
+        3//m4+H/rKmn/6upp//k4d7/1tLP/7+5tf+9uLT/vLey/5erxv+Xp8L/l6fB/5enwf+0r6r/s66p/7Gs
+        p//Rzcr/5OHe/6upp/+sqaf/5ODe/7+5tf+tp6L/o5iR/5+Wkf8MZbj/DI3Z/wB+2f8BTab/squm/5KI
+        gf+BenT/sayn/+Tg3v+sqaf/rKqo/+Pg3f+/ubX/o5iP/7atp/+dk4z/DGy//yKf5P8imOP/DFqv/7as
+        pP+on5j/hHtz/7awrP/j4N3/rKqo/62qqf/j4N7/1M/M/764tP++uLT/vri0/5Wuyv+Vrsr/la3J/5Wp
+        xf+7tbH/urSw/7izrv/Szcr/4+De/62qqf+tq6r/4+De/7exrf9SXmv/R1x1/0dcdf9HXHX/R1x1/0dc
+        df9HXHX/R1x1/0dcdf9SXmv/t7Gt/+Pg3v+tq6r/rqyq/+Th3v+grr//b5G2/5Styf+Urcn/lK3J/5St
+        yf+Urcn/lK3J/5Styf+Urcn/b5G2/6Cuv//k4d7/rqyq/66sq//k4d//lK3J/xpw5P/e2tf/3trX/7XG
+        4P9knfH/ZJ3x/2Sd8f94p+3/eKft/xpw5P+Urcn/5OHf/66sq/+vraz/5uLg/5Wtyf8acOT/ZJ3y/2Sd
+        8v+2xuD/ZJ3x/2Sd8v9knfL/T5P2/0+T9v8acOT/la3J/+bi4P+vraz/sK6t/+fk4v+Vrsr/GnDk/6K9
+        5f9Qk/b/or3l/3in7f+2xuD/ZJ7y/2Se8v9knvL/GnDk/5Wuyv/n5OL/sK6t/7Gvrv/p5uP/lq/L/2yZ
+        0v+hu+T/obvk/8rQ3P+hu+T/tcbg/7XG4P+1xuD/tcbg/2yZ0v+Wr8v/6ebj/7Gvrv+ysK//6ujm/7m0
+        r/87W37/JFiR/yRYkf8kWJH/JFiR/yRYkf8kWJH/JFiR/yRYkf87W37/ubSv/+ro5v+ysK//srCv/+vp
+        5//V0c7/urWx/7q1sf+6tbH/urWx/7q1sf+6tbH/urWx/7q1sf+6tbH/urWx/9XRzv/r6ef/srCv/7Kx
+        sP/y8fD/7erp/+3q6f/t6un/7erp/+3q6f/t6un/7erp/+3q6f/t6un/7erp/+3q6f/t6un/8vHw/7Kx
+        sP+Zl5b/s7Gw/7OxsP+zsbD/s7Gw/7OxsP+zsbD/s7Gw/7OxsP+zsbD/s7Gw/7OxsP+zsbD/s7Gw/7Ox
+        sP+Zl5b/AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA//8AAP//AAD//wAA
+        //8AAP//AAD//w==
+</value>
+  </data>
 </root>

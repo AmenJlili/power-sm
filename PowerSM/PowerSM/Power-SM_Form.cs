@@ -111,7 +111,7 @@ namespace PowerSM
         {
           
         }
-        private void StartButton_Click(object sender, EventArgs e)
+        private async void StartButton_Click(object sender, EventArgs e)
         {  
             // Radius must be a double
             double Radius;
@@ -121,21 +121,29 @@ namespace PowerSM
                 return;
             }
             // Progressbar housekeeping
+
             _ProgressBar.Value = 0;
             _ProgressBar.Minimum = 0;
             var ProgressMaximum = TreeViewFiles.Count;
             _ProgressBar.Step = (int)(ProgressMaximum / TreeViewFiles.Count);
             _ProgressBar.Maximum = ProgressMaximum;
+            LogTextBox.Text = string.Empty;
 
+            // sleeves roll-up
+           
             foreach (FileNodeElement element in TreeViewFiles)
             {
-          
+               
                 string filename = element.FullName;
-                string[] result = ChangeRadiusAsync(filename, Radius).Result;
+                Task<string[]> ChangeRadiusAsyncTask = ChangeRadiusAsync(filename,Radius);
+                string[] result = await ChangeRadiusAsyncTask;
                 _ProgressBar.PerformStep();
+                toolStripStatusLabel.Text = ((_ProgressBar.Value*1.0) / (_ProgressBar.Maximum*1.0)).ToString("P", System.Globalization.CultureInfo.InvariantCulture) ;
                 LogTextBox.Text += string.Join(System.Environment.NewLine,result);
                 
             }
+            toolStripStatusLabel.Text = "Ready";
+           
         }
 
         private async Task<string[]> ChangeRadiusAsync(string filename, double radius)
@@ -147,17 +155,21 @@ namespace PowerSM
         #endregion
 
         #region Change radius methods
-        
+
 
         private string[] ChangeRadius(string filename, double radius)
         {
+            
             int Errors = 0;
+            int Warnings = 0;
             ModelDoc2 swModelDoc;
             List<string> Results = new List<string>();
+            Results.Add(string.Format("[{0}-{1}] PART FILENAME: {2}", DateTime.Today.ToShortTimeString(), DateTime.Today.ToShortDateString(),filename));
            
             try
             {
-                swModelDoc = swApp.OpenDocSilent(filename, (int)swDocumentTypes_e.swDocPART, ref Errors);
+                swApp.DocumentVisible(false, (int)swDocumentTypes_e.swDocPART);
+                swModelDoc = swApp.OpenDoc6(filename, (int)swDocumentTypes_e.swDocPART,(int)swOpenDocOptions_e.swOpenDocOptions_Silent,string.Empty, ref Errors,ref Warnings);
                 
                 FeatureManager swFeatureManager = swModelDoc.FeatureManager;
                 var swFeatures = swFeatureManager.GetFeatures(false);
@@ -179,22 +191,24 @@ namespace PowerSM
 
                     swSheetMetalDataFeature.BendRadius = (radius * 1.0) / 1000.0;
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("Operation on {1} feature: {0}", FeatureResult?"Success":"Failure", swFeature.Name));
+                    Results.Add(string.Format("\t * changing {0}'s radius to {1} mm: {2}.",swFeature.Name,radius.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
 
-
+                    
                 }
 
                 swModelDoc.Save();
                 swApp.CloseDoc(string.Empty);
-                Results.Add("Complete with no errors.");
+                Results.Add(System.Environment.NewLine);
+                swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
                 return Results.ToArray<string>();
             
             }
             catch (Exception exception)
             {
-                var ErrorString = string.Format("{0}:{1}",DateTime.Today.TimeOfDay.ToString(), exception.Message);
-                System.IO.File.AppendAllText(string.Format(@"{0}\{1}",System.Reflection.Assembly.GetExecutingAssembly().CodeBase, "ErrorLog.txt"),ErrorString);
+                var ErrorString = string.Format("[{0}] - ERROR: {1}",DateTime.Today.ToShortTimeString(), exception.Message);
                 Results.Add(ErrorString);
+                Results.Add(System.Environment.NewLine);
+                swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
                 swApp.CloseDoc(string.Empty);
                 return Results.ToArray<string>();
                
@@ -203,57 +217,90 @@ namespace PowerSM
         #endregion
 
 
-       
-        public class FileNodeElement
+     
+        private void SaveLog_Click(object sender, EventArgs e)
         {
-            public string FullName { get; set; }
-            public string Name { get; set; }
+            SaveFileDialog _SaveFileDialog = new SaveFileDialog();
+            _SaveFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+            _SaveFileDialog.FileOk += SaveFileDialog_FileOK;
+            _SaveFileDialog.ShowDialog();
         }
 
-        public static class TestArea
+       private void SaveFileDialog_FileOK(object sender, EventArgs e)
+        {
+            var _SaveFileDialog = (SaveFileDialog)sender;
+            try
+            {
+               System.IO.File.WriteAllText(_SaveFileDialog.FileName, LogTextBox.Text);
+            }
+            catch (Exception)
+            {
+                ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_Write_Log_File);
+            }
+        }
+
+        private void quitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+           
+            this.Close();
+        }
+
+        private void aboutThisToolToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("TOOL CREATED BY JLILIAMEN@GMAIL.COM. ALL RIGHT RESERVED (C) 2016.","ABOUT THIS TOOL",MessageBoxButtons.OK,MessageBoxIcon.Information);
+        }
+
+    }
+
+    public class FileNodeElement
+    {
+        public string FullName { get; set; }
+        public string Name { get; set; }
+    }
+
+    public static class TestArea
+    {
+
+        public static string[] ChangeRadius(SldWorks swApp, string filename, double radius, List<string> swSheetMetalFeatureTypes)
         {
 
-            public static string[] ChangeRadius(SldWorks swApp, string filename, double radius, List<string> swSheetMetalFeatureTypes)
+            int Errors = 0;
+            ModelDoc2 swModelDoc;
+            List<string> Results = new List<string>();
+
+            swModelDoc = swApp.OpenDocSilent(filename, (int)swDocumentTypes_e.swDocPART, ref Errors);
+
+            FeatureManager swFeatureManager = swModelDoc.FeatureManager;
+            var swFeatures = swFeatureManager.GetFeatures(false);
+            foreach (Feature swFeature in swFeatures)
             {
+                dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypes.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
+                if (swSheetMetalDataFeature == null)
+                    continue;
 
-                int Errors = 0;
-                ModelDoc2 swModelDoc;
-                List<string> Results = new List<string>();
+                if (swSheetMetalDataFeature is SheetMetalFeatureData)
+                    swSheetMetalDataFeature.SetOverrideDefaultParameter(true);
 
-                swModelDoc = swApp.OpenDocSilent(filename, (int)swDocumentTypes_e.swDocPART, ref Errors);
+                if (swSheetMetalDataFeature is BaseFlangeFeatureData)
+                    swSheetMetalDataFeature.OverrideRadius = true;
 
-                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
-                var swFeatures = swFeatureManager.GetFeatures(false);
-                foreach (Feature swFeature in swFeatures)
-                {
-                    dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypes.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
-                    if (swSheetMetalDataFeature == null)
-                        continue;
-
-                    if (swSheetMetalDataFeature is SheetMetalFeatureData)
-                        swSheetMetalDataFeature.SetOverrideDefaultParameter(true);
-
-                    if (swSheetMetalDataFeature is BaseFlangeFeatureData)
-                        swSheetMetalDataFeature.OverrideRadius = true;
-
-                    if (swSheetMetalDataFeature is EdgeFlangeFeatureData)
-                        swSheetMetalDataFeature.UseDefaultBendRadius = false;
+                if (swSheetMetalDataFeature is EdgeFlangeFeatureData)
+                    swSheetMetalDataFeature.UseDefaultBendRadius = false;
 
 
-                    swSheetMetalDataFeature.BendRadius = radius / 1000.0;
-                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("{0}@{1}", FeatureResult, swFeature.Name));
+                swSheetMetalDataFeature.BendRadius = radius / 1000.0;
+                bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
+                Results.Add(string.Format("{0}@{1}", FeatureResult, swFeature.Name));
 
 
-                }
-
-                swModelDoc.Save();
-                swModelDoc.Close();
-                return Results.ToArray();
             }
 
-
-
+            swModelDoc.Save();
+            swModelDoc.Close();
+            return Results.ToArray();
         }
+
+
+
     }
 }

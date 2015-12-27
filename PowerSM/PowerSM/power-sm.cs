@@ -72,22 +72,22 @@ namespace PowerSM
            
             int DocType = (int)swDocumentTypes_e.swDocNONE;
             swApp.AddMenu(DocType, "PowerSM", 1);
-            swApp.AddMenuItem4(DocType, AddInCookie, "Power Radi Tool@PowerSM", 1, "RadiToolMethod", "3", "Power Radi Tool", "");
+            swApp.AddMenuItem4(DocType, AddInCookie, "Power Radius Tool@PowerSM", 1, "RadiusToolMethod", "3", "Power Radius Tool", "");
 
         }
         private void DestroyMenu()
         {
           
             int DocType = (int)swDocumentTypes_e.swDocNONE;
-            swApp.RemoveMenu(DocType, "PowerSM", "RadiToolMethod");
-            swApp.RemoveMenu(DocType, "Power Radi Tool@PowerSM", "RadiToolMethod");
+            swApp.RemoveMenu(DocType, "PowerSM", "RadiusToolMethod");
+            swApp.RemoveMenu(DocType, "Power Radius Tool@PowerSM", "RadiusToolMethod");
 
         }
         #endregion
 
         #region Add-in Implementation
         // Callback methods must be public, otherwise call from menu item fails 
-        public void RadiToolMethod()
+        public void RadiusToolMethod()
         {
             Power_SM_Form f = new Power_SM_Form(swApp);
             f.ShowDialog();
