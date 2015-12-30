@@ -1,7 +1,7 @@
 power-sm Add-in for SolidWorks 64 bits
 
 # Version History:
-- 12/30/2015: 1.0 pre-release (download <b><a href="https://github.com/jliliamen/power-sm/releases/download/1.0/PowerSMSetup.msi">here</a></b>.)
+- 12/30/2015: 1.0 pre-release. Download <b><a href="https://github.com/jliliamen/power-sm/releases/download/1.0/PowerSMSetup.msi">here</a></b>.
 
 
 # About:
@@ -27,4 +27,4 @@ The main functionalities will allow users to:
 
 # Notes to "hungry" end-users
 
-If you are looking to install this add-in on the fly, a installshield deployer will linked here in the future.
+If you are looking to install this add-in on the fly, a <strike>installshield</strike> windows msi deployer will linked <strike>here in the future</strike> in the history version section.
