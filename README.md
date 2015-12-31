@@ -1,4 +1,6 @@
-power-sm Add-in for SolidWorks 64 bits
+#power-sm Add-in for SolidWorks 64 bits
+
+<center><img src="http://s15.postimg.org/hhfktqpor/preview.png"></center>
 
 # Version History:
 
