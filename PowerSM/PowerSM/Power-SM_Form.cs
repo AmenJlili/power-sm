@@ -13,9 +13,10 @@ namespace PowerSM
 {
     public partial class Power_SM_Form : Form
     {
+
         string CurrentDirectory;
         SldWorks swApp;
-        List<FileNodeElement> TreeViewFiles;
+       List<CustomTreeNode> AllTreeViewNodes;
         List<string> swSheetMetalFeatureTypes;
         delegate bool del(SldWorks swApp, string filename, double radius);
         public Power_SM_Form(SldWorks swApp_)
@@ -65,9 +66,16 @@ namespace PowerSM
 
             if (!string.IsNullOrEmpty(FolderBrowser.SelectedPath))
             {
+                // List all directories
                 CurrentDirectory = FolderBrowser.SelectedPath;
-                TreeViewFiles = new List<FileNodeElement>();
                 ListDirectory(FilesTreeView, CurrentDirectory);
+
+                //Get all tree nodes from treeview
+                AllTreeViewNodes = new List<CustomTreeNode>();
+                GetAllNodesFromTreeView(FilesTreeView, AllTreeViewNodes);
+
+               // Select all nodes
+                selectAllToolStripMenuItem.PerformClick();
             }
         }
 
@@ -83,10 +91,10 @@ namespace PowerSM
             List<string> FileExtensions = new List<string>();
             FileExtensions.AddRange(new[] { "SLDPRT", "sldprt" });
 
-            var directoryNode = new TreeNode(directoryInfo.Name, (int)PowerSMEnums.TreeViewIcons.directory, (int)PowerSMEnums.TreeViewIcons.directory);
+            var directoryNode = new CustomTreeNode(directoryInfo.Name, (int)PowerSMEnums.TreeViewIcons.directory, (int)PowerSMEnums.TreeViewIcons.directory,directoryInfo.FullName);
 
             foreach (var directory in directoryInfo.GetDirectories())
-
+                // Do not add hiddens directories
                 if (!directory.Attributes.HasFlag(FileAttributes.Hidden))
                     directoryNode.Nodes.Add(CreateDirectoryNode(directory));
 
@@ -94,23 +102,14 @@ namespace PowerSM
             {
                 if (FileExtensions.Any(x => file.Extension.Contains(x)))
                 {
-                    directoryNode.Nodes.Add(new TreeNode(file.Name, (int)PowerSMEnums.TreeViewIcons.file, (int)PowerSMEnums.TreeViewIcons.file));
-
-                    TreeViewFiles.Add(new FileNodeElement()
-                    {
-                        FullName = file.FullName,
-                        Name = file.Name
-                    });
+                    directoryNode.Nodes.Add(new CustomTreeNode(file.Name, (int)PowerSMEnums.TreeViewIcons.file, (int)PowerSMEnums.TreeViewIcons.file,file.FullName));
+ 
                 }
             }
             return directoryNode;
         }
         #endregion
 
-        private void HouseKeeping()
-        {
-          
-        }
         private async void StartButton_Click(object sender, EventArgs e)
         {  
             // Radius must be a double
@@ -120,21 +119,31 @@ namespace PowerSM
                 ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_parse_radius_value);
                 return;
             }
-            // Progressbar housekeeping
 
+            // create selectednodes list 
+       
+            List<CustomTreeNode> SelectedTreeNodes = AllTreeViewNodes.FindAll(x => x.Checked == true).FindAll(x => File.Exists(x.FullFilePath));
+         
+            // return if no tree nodes are selected 
+            if (SelectedTreeNodes.Count == 0)
+                return;
+            
+            // housekeeping: Progressbar, LogTextBox
             _ProgressBar.Value = 0;
             _ProgressBar.Minimum = 0;
-            var ProgressMaximum = TreeViewFiles.Count;
-            _ProgressBar.Step = (int)(ProgressMaximum / TreeViewFiles.Count);
+            var ProgressMaximum = SelectedTreeNodes.Count;
+            _ProgressBar.Step = (int)(ProgressMaximum / SelectedTreeNodes.Count);
             _ProgressBar.Maximum = ProgressMaximum;
             LogTextBox.Text = string.Empty;
 
-            // sleeves roll-up
-           
-            foreach (FileNodeElement element in TreeViewFiles)
+            // sleeves roll-up:
+            
+       
+            foreach (CustomTreeNode element in SelectedTreeNodes)
             {
-               
-                string filename = element.FullName;
+
+                string filename = element.FullFilePath;
+
                 Task<string[]> ChangeRadiusAsyncTask = ChangeRadiusAsync(filename,Radius);
                 string[] result = await ChangeRadiusAsyncTask;
                 _ProgressBar.PerformStep();
@@ -142,8 +151,9 @@ namespace PowerSM
                 LogTextBox.Text += string.Join(System.Environment.NewLine,result);
                 
             }
+
             toolStripStatusLabel.Text = "Ready";
-           
+            
         }
 
         private async Task<string[]> ChangeRadiusAsync(string filename, double radius)
@@ -160,17 +170,49 @@ namespace PowerSM
         private string[] ChangeRadius(string filename, double radius)
         {
             
-            int Errors = 0;
-            int Warnings = 0;
+            int Error = 0;
+            int Warning = 0;
             ModelDoc2 swModelDoc;
             List<string> Results = new List<string>();
-            Results.Add(string.Format("[{0}-{1}] PART FILENAME: {2}", DateTime.Today.ToShortTimeString(), DateTime.Today.ToShortDateString(),filename));
+            Results.Add(string.Format("[{0}] PART FILENAME: {1}", DateTime.Now.ToString(),filename));
            
             try
             {
                 swApp.DocumentVisible(false, (int)swDocumentTypes_e.swDocPART);
-                swModelDoc = swApp.OpenDoc6(filename, (int)swDocumentTypes_e.swDocPART,(int)swOpenDocOptions_e.swOpenDocOptions_Silent,string.Empty, ref Errors,ref Warnings);
-                
+                swModelDoc = swApp.OpenDoc6(filename, (int)swDocumentTypes_e.swDocPART,(int)swOpenDocOptions_e.swOpenDocOptions_Silent,string.Empty, ref Error,ref Warning);
+
+                // All errors and warnings would throw a an error
+                if  (Warning != 0)
+                {
+                    throw new OpenFileException(Warning, true);
+                }
+                else if (Error != 0)
+                {
+                    throw new OpenFileException(Error, false);
+                }
+
+                // Check unit system and convert radius to corresponding value
+                int LengthUnit = swModelDoc.LengthUnit;
+                switch (LengthUnit)
+                {
+                    case (int)swLengthUnit_e.swMIL:
+                        {
+                            if (UnitSystemCombBox.Text == "MMGS")
+                                break;
+                            else
+                                radius = 0.0393701 * radius;
+                                break;
+                        }
+                    case (int)swLengthUnit_e.swINCHES:
+                        if (UnitSystemCombBox.Text == "IPS")
+                            break;
+                        else
+                            radius = radius / 0.0393701;
+                        break;
+                    default:
+                        break;
+                }
+
                 FeatureManager swFeatureManager = swModelDoc.FeatureManager;
                 var swFeatures = swFeatureManager.GetFeatures(false);
                 foreach (Feature swFeature in swFeatures)
@@ -181,6 +223,9 @@ namespace PowerSM
 
                     if (swSheetMetalDataFeature is SheetMetalFeatureData)
                         swSheetMetalDataFeature.SetOverrideDefaultParameter(true);
+
+                    if (swSheetMetalDataFeature is OneBendFeatureData)
+                        swSheetMetalDataFeature.UseDefaultBendRadius = false;
 
                     if (swSheetMetalDataFeature is BaseFlangeFeatureData)
                         swSheetMetalDataFeature.OverrideRadius = true;
@@ -205,7 +250,7 @@ namespace PowerSM
             }
             catch (Exception exception)
             {
-                var ErrorString = string.Format("[{0}] - ERROR: {1}",DateTime.Today.ToShortTimeString(), exception.Message);
+                var ErrorString = string.Format("[{0}] - ERROR: {1}",DateTime.Now.ToString(), exception.Message);
                 Results.Add(ErrorString);
                 Results.Add(System.Environment.NewLine);
                 swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
@@ -247,17 +292,130 @@ namespace PowerSM
 
         private void aboutThisToolToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("TOOL CREATED BY JLILIAMEN@GMAIL.COM. ALL RIGHT RESERVED (C) 2016.","ABOUT THIS TOOL",MessageBoxButtons.OK,MessageBoxIcon.Information);
+            AboutBox aboutbox = new AboutBox();
+            aboutbox.ShowDialog();
         }
 
-    }
+        private void FilesTreeView_DoubleClick(object sender, EventArgs e)
+        {
+        }
 
-    public class FileNodeElement
+        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (TreeNode treenode in AllTreeViewNodes)
+            {
+                treenode.Checked = true;
+            }
+                
+        }
+        private void unSelectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            foreach (TreeNode treenode in AllTreeViewNodes)
+            {
+                treenode.Checked = false;
+            }
+            }
+
+        #region GetAllNodes methods
+        private static void GetAllNodesFromTreeView(TreeView treeview, List<CustomTreeNode> AllTreeViewNodes)
+        {
+            AllTreeViewNodes.RemoveAll(x => x != null);
+            foreach (CustomTreeNode treenode in treeview.Nodes)
+            {
+                GetChildrenNodesFromNode(treenode, AllTreeViewNodes);
+            }
+          
+        }
+        private static void GetChildrenNodesFromNode(CustomTreeNode treenode, List<CustomTreeNode> AllTreeViewNodes)
+        {
+            AllTreeViewNodes.Add(treenode);
+            foreach (CustomTreeNode childtreenode in treenode.Nodes)
+                GetChildrenNodesFromNode(childtreenode, AllTreeViewNodes);
+        }
+        #endregion
+        #region UI: Check/uncheck children feature
+        private void FilesTreeView_AfterCheck(object sender, TreeViewEventArgs e)
+        {   // MSDN:
+            // The code only executes if the user caused the checked state to change.
+            if (e.Action != TreeViewAction.Unknown)
+            {
+                if (e.Node.Nodes.Count > 0)
+                {   // MSDN:
+                    /* Calls the CheckAllChildNodes method, passing in the current 
+                    Checked value of the TreeNode whose checked state changed. */
+                    this.CheckAllChildNodes(e.Node, e.Node.Checked);
+                }
+            }
+        }
+        private void CheckAllChildNodes(TreeNode treeNode, bool nodeChecked)
+        {
+            foreach (TreeNode node in treeNode.Nodes)
+            {
+                node.Checked = nodeChecked;
+                if (node.Nodes.Count > 0)
+                {
+                    // If the current node has child nodes, call the CheckAllChildsNodes method recursively.
+                    this.CheckAllChildNodes(node, nodeChecked);
+                }
+            }
+        }
+
+
+        #endregion
+
+        private void OpenFolder_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(CurrentDirectory))
+                System.Diagnostics.Process.Start("explorer.exe", CurrentDirectory);
+        }
+    }
+    public class CustomTreeNode:TreeNode
     {
-        public string FullName { get; set; }
-        public string Name { get; set; }
+        public string FullFilePath { get; set;}
+         
+
+        public CustomTreeNode(string text, int imageindex, int selectedimageIndex, string _FullFilePath)
+        {   
+            base.Text = text;
+            base.Name = text;
+            base.SelectedImageIndex = selectedimageIndex;
+            base.ImageIndex = imageindex;
+            FullFilePath = _FullFilePath;
+        }
     }
 
+    public class OpenFileException: Exception
+
+    {
+        bool warning;
+        int exception_warning_error;
+        public OpenFileException(int _exception_warning_error, bool _warning)
+        {
+
+            exception_warning_error = _exception_warning_error;
+            warning = _warning;
+        }
+        public override string Message
+        {
+            get
+            {
+                if (warning)
+                {
+                    swFileLoadWarning_e error = (swFileLoadWarning_e)exception_warning_error;
+                    return error.ToString().Replace('_', ' ').Replace("sw", "SolidWorks ");
+                }
+                else
+                {
+                    swFileLoadError_e error = (swFileLoadError_e)exception_warning_error;
+                    return error.ToString().Replace('_', ' ').Replace("sw", "SolidWorks ");
+                }
+                
+            }
+        }
+        
+    }
+
+    
     public static class TestArea
     {
 
