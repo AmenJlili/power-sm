@@ -1,7 +1,12 @@
 power-sm Add-in for SolidWorks 64 bits
 
 # Version History:
+
+- 12/31/2015: 1.0a pre-release. Download <b><a href="https://github.com/jliliamen/power-sm/releases/download/1.0a/PowerSMSetup.msi">here</a></b>.
 - 12/30/2015: 1.0 pre-release. Download <b><a href="https://github.com/jliliamen/power-sm/releases/download/1.0/PowerSMSetup.msi">here</a></b>.
+
+
+
 
 
 # About:
