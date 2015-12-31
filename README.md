@@ -1,6 +1,6 @@
 #power-sm Add-in for SolidWorks 64 bits
 
-<center><img src="http://s15.postimg.org/hhfktqpor/preview.png"></center>
+<center><img src="http://s15.postimg.org/hhfktqpor/preview.png"><br>pre-release 1.0</center>
 
 # Version History:
 
@@ -21,11 +21,11 @@ Many Sheet Metal Design Engineers are faced with cumbersome tasks of modifying h
 
 The main functionalities will allow users to:
 
-- Modify inner radi of Sheet Metal CAD Files
-- Modify thickness, material
-- Add Custom properties
-- Extract custom properties
-- Generate CSV of custom properties
+- Modify inner radius of Sheet Metal parts (Power Radius Tool)
+- Modify thickness, material (Future feature)
+- Add custom properties (Future feature)
+- Extract custom properties (Future feature)
+- Generate CSV of custom properties (Future feature)
 
 
 # Notes to developers
