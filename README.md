@@ -3,7 +3,7 @@
 <center><img src="http://s15.postimg.org/hhfktqpor/preview.png"></center>
 <br><center><b>Screenshot: </b>Pre-release 1.0</center>
 # Version History:
-
+- 03/01/2016: 1.0 release
 - 12/31/2015: 1.0a pre-release
 - 12/30/2015: 1.0 pre-release
 
