@@ -296,26 +296,27 @@ namespace PowerSM
             aboutbox.ShowDialog();
         }
 
-        private void FilesTreeView_DoubleClick(object sender, EventArgs e)
-        {
-        }
 
         private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            foreach (TreeNode treenode in AllTreeViewNodes)
+            if (AllTreeViewNodes != null)
             {
-                treenode.Checked = true;
+                foreach (TreeNode treenode in AllTreeViewNodes)
+                {
+                    treenode.Checked = true;
+                }
             }
-                
         }
         private void unSelectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            foreach (TreeNode treenode in AllTreeViewNodes)
+            if (AllTreeViewNodes != null)
             {
-                treenode.Checked = false;
+                foreach (TreeNode treenode in AllTreeViewNodes)
+                {
+                    treenode.Checked = false;
+                }
             }
-            }
-
+        }
         #region GetAllNodes methods
         private static void GetAllNodesFromTreeView(TreeView treeview, List<CustomTreeNode> AllTreeViewNodes)
         {
