@@ -79,6 +79,14 @@
       <DependentUpon>Power-SM_Form.cs</DependentUpon>
     </Compile>
     <Compile Include="PowerSMEnums.cs" />
+    <Compile Include="powersmoptions.cs">
+      <SubType>Form</SubType>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="powersmoptions.Designer.cs">
+      <DependentUpon>powersmoptions.cs</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -93,12 +101,17 @@
     <EmbeddedResource Include="Power-SM_Form.resx">
       <DependentUpon>Power-SM_Form.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="powersmoptions.resx">
+      <DependentUpon>powersmoptions.cs</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="App.config" />
     <None Include="Resources\part.ico" />
   </ItemGroup>
   <ItemGroup>

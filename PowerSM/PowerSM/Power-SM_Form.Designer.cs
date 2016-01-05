@@ -45,15 +45,16 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.aboutThisToolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
-            this.LogGroupBox = new System.Windows.Forms.GroupBox();
-            this.LogTextBox = new System.Windows.Forms.TextBox();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.selectAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unSelectAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.aboutThisToolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
             this.OpenFolder = new System.Windows.Forms.Button();
+            this.LogGroupBox = new System.Windows.Forms.GroupBox();
+            this.LogTextBox = new System.Windows.Forms.TextBox();
+            this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.FilesTreeGroupBox.SuspendLayout();
             this.SheetMetalDataGroupBox.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -95,7 +96,6 @@
             this.FilesTreeView.Size = new System.Drawing.Size(475, 220);
             this.FilesTreeView.TabIndex = 0;
             this.FilesTreeView.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.FilesTreeView_AfterCheck);
-            this.FilesTreeView.DoubleClick += new System.EventHandler(this.FilesTreeView_DoubleClick);
             // 
             // SheetMetalDataGroupBox
             // 
@@ -198,6 +198,7 @@
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
             this.editToolStripMenuItem,
+            this.optionsToolStripMenuItem,
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
@@ -219,9 +220,35 @@
             // 
             this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
             this.quitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
             this.quitToolStripMenuItem.Text = "Quit";
             this.quitToolStripMenuItem.Click += new System.EventHandler(this.quitToolStripMenuItem_Click);
+            // 
+            // editToolStripMenuItem
+            // 
+            this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.selectAllToolStripMenuItem,
+            this.unSelectAllToolStripMenuItem});
+            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
+            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
+            this.editToolStripMenuItem.Text = "Edit";
+            // 
+            // selectAllToolStripMenuItem
+            // 
+            this.selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
+            this.selectAllToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.A)));
+            this.selectAllToolStripMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.selectAllToolStripMenuItem.Text = "Select All ";
+            this.selectAllToolStripMenuItem.Click += new System.EventHandler(this.selectAllToolStripMenuItem_Click);
+            // 
+            // unSelectAllToolStripMenuItem
+            // 
+            this.unSelectAllToolStripMenuItem.Name = "unSelectAllToolStripMenuItem";
+            this.unSelectAllToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
+            | System.Windows.Forms.Keys.A)));
+            this.unSelectAllToolStripMenuItem.Size = new System.Drawing.Size(211, 22);
+            this.unSelectAllToolStripMenuItem.Text = "UnSelect All";
+            this.unSelectAllToolStripMenuItem.Click += new System.EventHandler(this.unSelectAllToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -270,6 +297,16 @@
             // 
             this.toolStripContainer1.TopToolStripPanel.Controls.Add(this.menuStrip1);
             // 
+            // OpenFolder
+            // 
+            this.OpenFolder.Location = new System.Drawing.Point(289, 485);
+            this.OpenFolder.Name = "OpenFolder";
+            this.OpenFolder.Size = new System.Drawing.Size(103, 31);
+            this.OpenFolder.TabIndex = 8;
+            this.OpenFolder.Text = "Open folder";
+            this.OpenFolder.UseVisualStyleBackColor = true;
+            this.OpenFolder.Click += new System.EventHandler(this.OpenFolder_Click);
+            // 
             // LogGroupBox
             // 
             this.LogGroupBox.Controls.Add(this.LogTextBox);
@@ -288,41 +325,11 @@
             this.LogTextBox.Size = new System.Drawing.Size(462, 133);
             this.LogTextBox.TabIndex = 0;
             // 
-            // editToolStripMenuItem
+            // optionsToolStripMenuItem
             // 
-            this.editToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.selectAllToolStripMenuItem,
-            this.unSelectAllToolStripMenuItem});
-            this.editToolStripMenuItem.Name = "editToolStripMenuItem";
-            this.editToolStripMenuItem.Size = new System.Drawing.Size(39, 20);
-            this.editToolStripMenuItem.Text = "Edit";
-            // 
-            // selectAllToolStripMenuItem
-            // 
-            this.selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
-            this.selectAllToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.A)));
-            this.selectAllToolStripMenuItem.Size = new System.Drawing.Size(211, 22);
-            this.selectAllToolStripMenuItem.Text = "Select All ";
-            this.selectAllToolStripMenuItem.Click += new System.EventHandler(this.selectAllToolStripMenuItem_Click);
-            // 
-            // unSelectAllToolStripMenuItem
-            // 
-            this.unSelectAllToolStripMenuItem.Name = "unSelectAllToolStripMenuItem";
-            this.unSelectAllToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
-            | System.Windows.Forms.Keys.A)));
-            this.unSelectAllToolStripMenuItem.Size = new System.Drawing.Size(211, 22);
-            this.unSelectAllToolStripMenuItem.Text = "UnSelect All";
-            this.unSelectAllToolStripMenuItem.Click += new System.EventHandler(this.unSelectAllToolStripMenuItem_Click);
-            // 
-            // OpenFolder
-            // 
-            this.OpenFolder.Location = new System.Drawing.Point(289, 485);
-            this.OpenFolder.Name = "OpenFolder";
-            this.OpenFolder.Size = new System.Drawing.Size(103, 31);
-            this.OpenFolder.TabIndex = 8;
-            this.OpenFolder.Text = "Open folder";
-            this.OpenFolder.UseVisualStyleBackColor = true;
-            this.OpenFolder.Click += new System.EventHandler(this.OpenFolder_Click);
+            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
+            this.optionsToolStripMenuItem.Text = "Options";
             // 
             // Power_SM_Form
             // 
@@ -385,5 +392,6 @@
         private System.Windows.Forms.ToolStripMenuItem selectAllToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem unSelectAllToolStripMenuItem;
         private System.Windows.Forms.Button OpenFolder;
+        private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
     }
 }
