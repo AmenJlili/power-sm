@@ -79,12 +79,12 @@
       <DependentUpon>Power-SM_Form.cs</DependentUpon>
     </Compile>
     <Compile Include="PowerSMEnums.cs" />
-    <Compile Include="powersmoptions.cs">
+    <Compile Include="PowerSMOptions.cs">
       <SubType>Form</SubType>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="powersmoptions.Designer.cs">
-      <DependentUpon>powersmoptions.cs</DependentUpon>
+    <Compile Include="PowerSMOptions.Designer.cs">
+      <DependentUpon>PowerSMOptions.cs</DependentUpon>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -101,8 +101,8 @@
     <EmbeddedResource Include="Power-SM_Form.resx">
       <DependentUpon>Power-SM_Form.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="powersmoptions.resx">
-      <DependentUpon>powersmoptions.cs</DependentUpon>
+    <EmbeddedResource Include="PowerSMOptions.resx">
+      <DependentUpon>PowerSMOptions.cs</DependentUpon>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">

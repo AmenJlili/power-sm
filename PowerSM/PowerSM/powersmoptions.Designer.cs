@@ -1,6 +1,6 @@
 ﻿namespace PowerSM
 {
-    partial class powersmoptions
+    partial class PowerSMOptions
     {
         /// <summary>
         /// Required designer variable.

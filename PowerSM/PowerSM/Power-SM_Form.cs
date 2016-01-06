@@ -25,9 +25,6 @@ namespace PowerSM
             swApp = swApp_;
         }
 
-
-        #region UI methods
-
         private void Power_SM_Form_Load(object sender, EventArgs e)
         {
             // Load icons for tree view 
@@ -51,6 +48,9 @@ namespace PowerSM
                                                     "Jog",
                                                     "Bends"});
         }
+    
+        
+        #region UI methods
 
         #region Browse for files
         private void BrowseForFolderButton_Click(object sender, EventArgs e)
@@ -110,6 +110,123 @@ namespace PowerSM
         }
         #endregion
 
+        private void OpenFolder_Click(object sender, EventArgs e)
+        {
+            if (!string.IsNullOrEmpty(CurrentDirectory))
+                System.Diagnostics.Process.Start("explorer.exe", CurrentDirectory);
+        }
+
+        private void optionsToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            var powersmoptions = new PowerSMOptions();
+            powersmoptions.ShowDialog();
+        }
+
+
+        #region UI: Check/uncheck children feature
+        private void FilesTreeView_AfterCheck(object sender, TreeViewEventArgs e)
+        {   // MSDN:
+            // The code only executes if the user caused the checked state to change.
+            if (e.Action != TreeViewAction.Unknown)
+            {
+                if (e.Node.Nodes.Count > 0)
+                {   // MSDN:
+                    /* Calls the CheckAllChildNodes method, passing in the current 
+                    Checked value of the TreeNode whose checked state changed. */
+                    this.CheckAllChildNodes(e.Node, e.Node.Checked);
+                }
+            }
+        }
+        private void CheckAllChildNodes(TreeNode treeNode, bool nodeChecked)
+        {
+            foreach (TreeNode node in treeNode.Nodes)
+            {
+                node.Checked = nodeChecked;
+                if (node.Nodes.Count > 0)
+                {
+                    // If the current node has child nodes, call the CheckAllChildsNodes method recursively.
+                    this.CheckAllChildNodes(node, nodeChecked);
+                }
+            }
+        }
+
+
+        #endregion
+
+        private void SaveLog_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog _SaveFileDialog = new SaveFileDialog();
+            _SaveFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+            _SaveFileDialog.FileOk += SaveFileDialog_FileOK;
+            _SaveFileDialog.ShowDialog();
+        }
+
+        private void SaveFileDialog_FileOK(object sender, EventArgs e)
+        {
+            var _SaveFileDialog = (SaveFileDialog)sender;
+            try
+            {
+                System.IO.File.WriteAllText(_SaveFileDialog.FileName, LogTextBox.Text);
+            }
+            catch (Exception)
+            {
+                ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_Write_Log_File);
+            }
+        }
+
+        private void quitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            this.Close();
+        }
+
+        private void aboutThisToolToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            AboutBox aboutbox = new AboutBox();
+            aboutbox.ShowDialog();
+        }
+
+        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (AllTreeViewNodes != null)
+            {
+                foreach (TreeNode treenode in AllTreeViewNodes)
+                {
+                    treenode.Checked = true;
+                }
+            }
+        }
+        private void unSelectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (AllTreeViewNodes != null)
+            {
+                foreach (TreeNode treenode in AllTreeViewNodes)
+                {
+                    treenode.Checked = false;
+                }
+            }
+        }
+        #endregion
+
+        #region GetAllNodes methods
+        private static void GetAllNodesFromTreeView(TreeView treeview, List<CustomTreeNode> AllTreeViewNodes)
+        {
+            AllTreeViewNodes.RemoveAll(x => x != null);
+            foreach (CustomTreeNode treenode in treeview.Nodes)
+            {
+                GetChildrenNodesFromNode(treenode, AllTreeViewNodes);
+            }
+
+        }
+        private static void GetChildrenNodesFromNode(CustomTreeNode treenode, List<CustomTreeNode> AllTreeViewNodes)
+        {
+            AllTreeViewNodes.Add(treenode);
+            foreach (CustomTreeNode childtreenode in treenode.Nodes)
+                GetChildrenNodesFromNode(childtreenode, AllTreeViewNodes);
+        }
+        #endregion
+
+
         private async void StartButton_Click(object sender, EventArgs e)
         {
             // Radius must be a double
@@ -155,14 +272,14 @@ namespace PowerSM
             toolStripStatusLabel.Text = "Ready";
 
         }
-
+        
         private async Task<string[]> ChangeRadiusAsync(string filename, double radius)
         {
 
             return await Task.Run(() => ChangeRadius(filename, radius));
 
         }
-        #endregion
+        
 
         #region Change radius methods
 
@@ -170,6 +287,7 @@ namespace PowerSM
         private string[] ChangeRadius(string filename, double radius)
         {
 
+            double swSheetMetalThickness = 0;
             int Error = 0;
             int Warning = 0;
             ModelDoc2 swModelDoc;
@@ -222,8 +340,10 @@ namespace PowerSM
                         continue;
 
                     if (swSheetMetalDataFeature is SheetMetalFeatureData)
-                        swSheetMetalDataFeature.SetOverrideDefaultParameter(true);
-
+                    {
+                       swSheetMetalDataFeature.SetOverrideDefaultParameter(true);
+                       swSheetMetalThickness  = swSheetMetalDataFeature.Thickness; 
+                    }
                     if (swSheetMetalDataFeature is OneBendFeatureData)
                         swSheetMetalDataFeature.UseDefaultBendRadius = false;
 
@@ -232,7 +352,26 @@ namespace PowerSM
 
                     if (swSheetMetalDataFeature is EdgeFlangeFeatureData)
                         swSheetMetalDataFeature.UseDefaultBendRadius = false;
+                    {
+                        // If Edge Flange's bend is outside of the base flange, compensation is needed in order to respect outside dimensions
+                        if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ForceDimensionalRespect"]))
+                        {
+                            if (swSheetMetalDataFeature.PositionType == (int)swFlangePositionTypes_e.swFlangePositionTypeBendOutside)
+                            {
+                                var dif = radius * 1000.0 - swSheetMetalDataFeature.BendRadius; // difference between old radius and new radius
+                                if (dif >= 0)
+                                {
+                                    swSheetMetalDataFeature.OffsetDistance = dif + 0.5 * swSheetMetalThickness;
+                                }
+                                else
+                                {
+                                    swSheetMetalDataFeature.ReversePositionOffset = true;
+                                    swSheetMetalDataFeature.OffsetDistance = dif + 0.5 * swSheetMetalThickness;
 
+                                }
+                            }
+                        }        
+                    }
 
                     swSheetMetalDataFeature.BendRadius = (radius * 1.0) / 1000.0;
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
@@ -259,117 +398,14 @@ namespace PowerSM
 
             }
         }
-
+       // private string[] ChangeKFactor(ModelDoc2 swModelDoc, decimal KFactor)
+       // private string[] ChangeThickness(ModelDoc2 swModelDoc, double Thickness)
         #endregion
 
 
+  
 
-        private void SaveLog_Click(object sender, EventArgs e)
-        {
-            SaveFileDialog _SaveFileDialog = new SaveFileDialog();
-            _SaveFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
-            _SaveFileDialog.FileOk += SaveFileDialog_FileOK;
-            _SaveFileDialog.ShowDialog();
-        }
-
-        private void SaveFileDialog_FileOK(object sender, EventArgs e)
-        {
-            var _SaveFileDialog = (SaveFileDialog)sender;
-            try
-            {
-                System.IO.File.WriteAllText(_SaveFileDialog.FileName, LogTextBox.Text);
-            }
-            catch (Exception)
-            {
-                ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_Write_Log_File);
-            }
-        }
-
-        private void quitToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-            this.Close();
-        }
-
-        private void aboutThisToolToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            AboutBox aboutbox = new AboutBox();
-            aboutbox.ShowDialog();
-        }
-
-
-        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (AllTreeViewNodes != null)
-            {
-                foreach (TreeNode treenode in AllTreeViewNodes)
-                {
-                    treenode.Checked = true;
-                }
-            }
-        }
-        private void unSelectAllToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (AllTreeViewNodes != null)
-            {
-                foreach (TreeNode treenode in AllTreeViewNodes)
-                {
-                    treenode.Checked = false;
-                }
-            }
-        }
-        #region GetAllNodes methods
-        private static void GetAllNodesFromTreeView(TreeView treeview, List<CustomTreeNode> AllTreeViewNodes)
-        {
-            AllTreeViewNodes.RemoveAll(x => x != null);
-            foreach (CustomTreeNode treenode in treeview.Nodes)
-            {
-                GetChildrenNodesFromNode(treenode, AllTreeViewNodes);
-            }
-
-        }
-        private static void GetChildrenNodesFromNode(CustomTreeNode treenode, List<CustomTreeNode> AllTreeViewNodes)
-        {
-            AllTreeViewNodes.Add(treenode);
-            foreach (CustomTreeNode childtreenode in treenode.Nodes)
-                GetChildrenNodesFromNode(childtreenode, AllTreeViewNodes);
-        }
-        #endregion
-        #region UI: Check/uncheck children feature
-        private void FilesTreeView_AfterCheck(object sender, TreeViewEventArgs e)
-        {   // MSDN:
-            // The code only executes if the user caused the checked state to change.
-            if (e.Action != TreeViewAction.Unknown)
-            {
-                if (e.Node.Nodes.Count > 0)
-                {   // MSDN:
-                    /* Calls the CheckAllChildNodes method, passing in the current 
-                    Checked value of the TreeNode whose checked state changed. */
-                    this.CheckAllChildNodes(e.Node, e.Node.Checked);
-                }
-            }
-        }
-        private void CheckAllChildNodes(TreeNode treeNode, bool nodeChecked)
-        {
-            foreach (TreeNode node in treeNode.Nodes)
-            {
-                node.Checked = nodeChecked;
-                if (node.Nodes.Count > 0)
-                {
-                    // If the current node has child nodes, call the CheckAllChildsNodes method recursively.
-                    this.CheckAllChildNodes(node, nodeChecked);
-                }
-            }
-        }
-
-
-        #endregion
-
-        private void OpenFolder_Click(object sender, EventArgs e)
-        {
-            if (!string.IsNullOrEmpty(CurrentDirectory))
-                System.Diagnostics.Process.Start("explorer.exe", CurrentDirectory);
-        }
+      
     }
     public class CustomTreeNode : TreeNode
     {
