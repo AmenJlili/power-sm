@@ -20,6 +20,7 @@ namespace PowerSM
         List<CustomTreeNode> AllTreeViewNodes;
         List<string> swSheetMetalFeatureTypeWithRadiusProperty;
         List<string> swSheetMetalFeatureTypeWithThicknessProperty;
+        List<string> swSheetMetalFeatureTypeWithKFactorProperty;
         delegate bool del(SldWorks swApp, string filename, double radius);
         public Power_SM_Form(SldWorks swApp_)
         {
@@ -49,9 +50,18 @@ namespace PowerSM
                                                     "SMMiteredFlange",
                                                     "Jog",
                                                     "Bends"});
-        
+            swSheetMetalFeatureTypeWithKFactorProperty = new List<string>();
+            swSheetMetalFeatureTypeWithKFactorProperty.AddRange(new[] {
+                                                    "EdgeFlange",
+                                                    "SheetMetal",
+                                                    "OneBend",
+                                                    "Hem",
+                                                    "SMMiteredFlange",
+                                                    "Jog",
+                                                    "Bends"});
 
-        swSheetMetalFeatureTypeWithThicknessProperty = new List<string>();
+
+            swSheetMetalFeatureTypeWithThicknessProperty = new List<string>();
         swSheetMetalFeatureTypeWithThicknessProperty.AddRange(new[] {"SMBaseFlange",
                                                     "SMBaseFlange",
                                                     "LoftedBends",
@@ -538,14 +548,15 @@ namespace PowerSM
                 var swFeatures = swFeatureManager.GetFeatures(false);
                 foreach (Feature swFeature in swFeatures)
                 {
-                    dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithThicknessProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
+                    dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithKFactorProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
                     if (swSheetMetalDataFeature == null)
                         continue;
                     // missing overrride for bend tables 
-                    CustomBendAllowance swCustomAllowance = swSheetMetalDataFeature.GetCustomBendAllowance();
-                    swCustomAllowance.KFactor = (double)KFactor;
-                    swCustomAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
-                    swSheetMetalDataFeature.SetCustomBendAllowance(swCustomAllowance);
+                    
+                    CustomBendAllowance swCustomBendAllowance = swSheetMetalDataFeature.GetCustomBendAllowance();
+                    swCustomBendAllowance.KFactor = (double)KFactor;
+                    swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
+                    swSheetMetalDataFeature.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
                     Results.Add(string.Format("\t * changing {0}'s kfactor to {1} mm: {2}.", swFeature.Name, KFactor.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
 
@@ -625,9 +636,14 @@ namespace PowerSM
 
 
 
+
         #endregion
 
-      
+        private void partViewerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var partviewform = new PartViewForm();
+            partviewform.Show();
+        }
     }
     public class CustomTreeNode : TreeNode
     {

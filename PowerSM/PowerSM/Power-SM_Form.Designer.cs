@@ -58,10 +58,11 @@
             this.helpToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutThisToolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
+            this.BrowseForOutPutFolder = new System.Windows.Forms.Button();
             this.OpenFolder = new System.Windows.Forms.Button();
             this.LogGroupBox = new System.Windows.Forms.GroupBox();
             this.LogTextBox = new System.Windows.Forms.TextBox();
-            this.BrowseForOutPutFolder = new System.Windows.Forms.Button();
+            this.partViewerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.FilesTreeGroupBox.SuspendLayout();
             this.SheetMetalDataGroupBox.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -296,7 +297,8 @@
             // optionsToolStripMenuItem
             // 
             this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.optionsToolStripMenuItem1});
+            this.optionsToolStripMenuItem1,
+            this.partViewerToolStripMenuItem});
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
             this.optionsToolStripMenuItem.Text = "Tools";
@@ -305,7 +307,7 @@
             // 
             this.optionsToolStripMenuItem1.Name = "optionsToolStripMenuItem1";
             this.optionsToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.optionsToolStripMenuItem1.Size = new System.Drawing.Size(159, 22);
+            this.optionsToolStripMenuItem1.Size = new System.Drawing.Size(178, 22);
             this.optionsToolStripMenuItem1.Text = "Options";
             this.optionsToolStripMenuItem1.Click += new System.EventHandler(this.optionsToolStripMenuItem1_Click);
             // 
@@ -366,6 +368,16 @@
             // 
             this.toolStripContainer1.TopToolStripPanel.Controls.Add(this.menuStrip1);
             // 
+            // BrowseForOutPutFolder
+            // 
+            this.BrowseForOutPutFolder.Location = new System.Drawing.Point(398, 290);
+            this.BrowseForOutPutFolder.Name = "BrowseForOutPutFolder";
+            this.BrowseForOutPutFolder.Size = new System.Drawing.Size(94, 38);
+            this.BrowseForOutPutFolder.TabIndex = 9;
+            this.BrowseForOutPutFolder.Text = "Output folder...";
+            this.BrowseForOutPutFolder.UseVisualStyleBackColor = true;
+            this.BrowseForOutPutFolder.Click += new System.EventHandler(this.BrowseForOutPutFolder_Click);
+            // 
             // OpenFolder
             // 
             this.OpenFolder.Location = new System.Drawing.Point(289, 485);
@@ -395,15 +407,13 @@
             this.LogTextBox.Size = new System.Drawing.Size(471, 80);
             this.LogTextBox.TabIndex = 0;
             // 
-            // BrowseForOutPutFolder
+            // partViewerToolStripMenuItem
             // 
-            this.BrowseForOutPutFolder.Location = new System.Drawing.Point(398, 290);
-            this.BrowseForOutPutFolder.Name = "BrowseForOutPutFolder";
-            this.BrowseForOutPutFolder.Size = new System.Drawing.Size(94, 38);
-            this.BrowseForOutPutFolder.TabIndex = 9;
-            this.BrowseForOutPutFolder.Text = "Output folder...";
-            this.BrowseForOutPutFolder.UseVisualStyleBackColor = true;
-            this.BrowseForOutPutFolder.Click += new System.EventHandler(this.BrowseForOutPutFolder_Click);
+            this.partViewerToolStripMenuItem.Name = "partViewerToolStripMenuItem";
+            this.partViewerToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.W)));
+            this.partViewerToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
+            this.partViewerToolStripMenuItem.Text = "Part Viewer";
+            this.partViewerToolStripMenuItem.Click += new System.EventHandler(this.partViewerToolStripMenuItem_Click);
             // 
             // Power_SM_Form
             // 
@@ -474,5 +484,6 @@
         private System.Windows.Forms.TextBox ThicknessTextBox;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button BrowseForOutPutFolder;
+        private System.Windows.Forms.ToolStripMenuItem partViewerToolStripMenuItem;
     }
 }

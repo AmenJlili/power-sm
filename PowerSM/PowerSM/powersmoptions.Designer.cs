@@ -49,7 +49,7 @@
             // ArchiveInZipFormatCheckBox
             // 
             this.ArchiveInZipFormatCheckBox.AutoSize = true;
-            this.ArchiveInZipFormatCheckBox.Location = new System.Drawing.Point(17, 63);
+            this.ArchiveInZipFormatCheckBox.Location = new System.Drawing.Point(17, 53);
             this.ArchiveInZipFormatCheckBox.Name = "ArchiveInZipFormatCheckBox";
             this.ArchiveInZipFormatCheckBox.Size = new System.Drawing.Size(144, 17);
             this.ArchiveInZipFormatCheckBox.TabIndex = 1;
@@ -62,31 +62,31 @@
             this.groupBox1.Controls.Add(this.ArchiveInZipFormatCheckBox);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(363, 105);
+            this.groupBox1.Size = new System.Drawing.Size(461, 217);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Options";
             // 
             // SaveOptionsButton
             // 
-            this.SaveOptionsButton.Location = new System.Drawing.Point(263, 123);
+            this.SaveOptionsButton.Location = new System.Drawing.Point(361, 235);
             this.SaveOptionsButton.Name = "SaveOptionsButton";
-            this.SaveOptionsButton.Size = new System.Drawing.Size(112, 37);
+            this.SaveOptionsButton.Size = new System.Drawing.Size(112, 27);
             this.SaveOptionsButton.TabIndex = 3;
             this.SaveOptionsButton.Text = "O.K";
             this.SaveOptionsButton.UseVisualStyleBackColor = true;
             this.SaveOptionsButton.Click += new System.EventHandler(this.SaveOptionsButton_Click);
             // 
-            // powersmoptions
+            // PowerSMOptions
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(387, 173);
+            this.ClientSize = new System.Drawing.Size(485, 274);
             this.Controls.Add(this.SaveOptionsButton);
             this.Controls.Add(this.groupBox1);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "powersmoptions";
+            this.Name = "PowerSMOptions";
             this.Text = "Power-SM Options";
             this.Load += new System.EventHandler(this.powersmoptions_Load);
             this.groupBox1.ResumeLayout(false);

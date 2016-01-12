@@ -27,6 +27,7 @@ namespace PowerSM
         {
             System.Configuration.ConfigurationSettings.AppSettings["ForceDimensionalRespect"] = ForceDimensionalRespectCheckBox.Checked.ToString();
             System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"] = ArchiveInZipFormatCheckBox.Checked.ToString();
+            this.Close();
         }
     }
 }
