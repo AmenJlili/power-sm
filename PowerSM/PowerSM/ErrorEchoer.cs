@@ -13,13 +13,19 @@ namespace PowerSM
         {
             switch (ErrorEnum)
             {
-                case 0:
+                case (int) PowerSMEnums.Errors.Cannot_parse_radius_value:
                     EchoMessage("Incorrect radius value.");
                     break;
-                case 1: 
+                case (int) PowerSMEnums.Errors.Cannot_delete_menu: 
                     EchoMessage("Cannot delete Menu on Add-in unload.");
                     break;
-                case 2:
+                case (int)PowerSMEnums.Errors.cannot_parse_kfacor:
+                    EchoMessage("Incorrect kfactor value.");
+                    break;
+                case (int)PowerSMEnums.Errors.cannot_parse_thickness:
+                    EchoMessage("Incorrect thickness value");
+                    break;
+                case (int)PowerSMEnums.Errors.Cannot_Write_Log_File:
                     EchoMessage("Cannot write log file.");
                     break;
                 default:

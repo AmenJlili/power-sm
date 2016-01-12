@@ -16,9 +16,13 @@ namespace PowerSM
 
         public enum Errors
         {
-            Cannot_parse_radius_value = 0,
-            Cannot_delete_menu = 1,
-            Cannot_Write_Log_File = 2
+           
+            Cannot_delete_menu = 0,
+            Cannot_Write_Log_File = 1,
+            Cannot_parse_radius_value = 2,
+            cannot_parse_kfacor = 3,
+            cannot_parse_thickness = 4
+
         }
     }
 }

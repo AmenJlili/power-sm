@@ -8,6 +8,7 @@ using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using System.IO;
 using System.IO.Compression;
+using System.Globalization;
 namespace PowerSM
 {
     public partial class Power_SM_Form : Form
@@ -256,23 +257,23 @@ namespace PowerSM
         {
             // Radius must be a double
             double Radius;
-            if (!double.TryParse(RadiusTextBox.Text, out Radius))
+            if (!double.TryParse(String.IsNullOrWhiteSpace(RadiusTextBox.Text) ? "0" : RadiusTextBox.Text, out Radius))
             {
                 ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_parse_radius_value);
                 return;
             }
 
             double thickness;
-            if (!double.TryParse(ThicknessTextBox.Text, out thickness))
+            if (!double.TryParse(String.IsNullOrWhiteSpace(ThicknessTextBox.Text) ? "0" : ThicknessTextBox.Text, out thickness))
             {
-                ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_parse_radius_value);
+                ErrorEchoer.Err((int)PowerSMEnums.Errors.cannot_parse_thickness);
                 return;
             }
 
             decimal kfactor;
-            if (!decimal.TryParse(KFactorTextBox.Text, out kfactor))
+            if (!decimal.TryParse(String.IsNullOrWhiteSpace(KFactorTextBox.Text) ? "0" : KFactorTextBox.Text, out kfactor))
             {
-                ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_parse_radius_value);
+                ErrorEchoer.Err((int)PowerSMEnums.Errors.cannot_parse_kfacor);
                 return;
             }
 
@@ -377,8 +378,8 @@ namespace PowerSM
 
                 if (radius > 0)
                 {
+                   
                     Results.AddRange(ChangeRadius(swModelDoc, radius));
-
                 }
                 // save 
 
@@ -507,6 +508,7 @@ namespace PowerSM
 
                     swSheetMetalDataFeature.BendRadius = (radius * 1.0) / 1000.0;
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
+                    
                     Results.Add(string.Format("\t * changing {0}'s radius to {1} mm: {2}.", swFeature.Name, radius.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
@@ -527,8 +529,7 @@ namespace PowerSM
         {
             List<string> Results = new List<string>();
 
-            var swCustomAllowance = new CustomBendAllowance();
-            swCustomAllowance.KFactor = (double)KFactor;
+           
 
             try
             {
@@ -540,6 +541,10 @@ namespace PowerSM
                     dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithThicknessProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
                     if (swSheetMetalDataFeature == null)
                         continue;
+                    // missing overrride for bend tables 
+                    CustomBendAllowance swCustomAllowance = swSheetMetalDataFeature.GetCustomBendAllowance();
+                    swCustomAllowance.KFactor = (double)KFactor;
+                    swCustomAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
                     swSheetMetalDataFeature.SetCustomBendAllowance(swCustomAllowance);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
                     Results.Add(string.Format("\t * changing {0}'s kfactor to {1} mm: {2}.", swFeature.Name, KFactor.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
@@ -590,7 +595,7 @@ namespace PowerSM
                     default:
                         break;
                 }
-
+                 // missing overrride for bend tables 
                 FeatureManager swFeatureManager = swModelDoc.FeatureManager;
                 var swFeatures = swFeatureManager.GetFeatures(false);
                 foreach (Feature swFeature in swFeatures)
@@ -598,7 +603,7 @@ namespace PowerSM
                     dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithThicknessProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
                     if (swSheetMetalDataFeature == null)
                         continue;
-                    swSheetMetalDataFeature.Thickness = Thickness * 1000.0;
+                    swSheetMetalDataFeature.Thickness = Thickness / 1000.0;
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
                     Results.Add(string.Format("\t * changing {0}'s thickness to {1} mm: {2}.", swFeature.Name, Thickness.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
 
