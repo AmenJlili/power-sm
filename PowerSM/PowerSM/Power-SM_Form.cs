@@ -7,17 +7,18 @@ using System.Windows.Forms;
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
+using System.IO.Compression;
 namespace PowerSM
 {
     public partial class Power_SM_Form : Form
     {
 
         string CurrentDirectory;
+        string OutputDirectory;
         SldWorks swApp;
         List<CustomTreeNode> AllTreeViewNodes;
         List<string> swSheetMetalFeatureTypeWithRadiusProperty;
+        List<string> swSheetMetalFeatureTypeWithThicknessProperty;
         delegate bool del(SldWorks swApp, string filename, double radius);
         public Power_SM_Form(SldWorks swApp_)
         {
@@ -36,7 +37,7 @@ namespace PowerSM
 
             FilesTreeView.ImageList.Images.Add(part);
             FilesTreeView.ImageList.Images.Add(folder);
-            // Add SheetMetalFeature types
+          
             swSheetMetalFeatureTypeWithRadiusProperty = new List<string>();
             swSheetMetalFeatureTypeWithRadiusProperty.AddRange(new[] {"SMBaseFlange",
                                                     "EdgeFlange",
@@ -47,13 +48,23 @@ namespace PowerSM
                                                     "SMMiteredFlange",
                                                     "Jog",
                                                     "Bends"});
+        
+
+        swSheetMetalFeatureTypeWithThicknessProperty = new List<string>();
+        swSheetMetalFeatureTypeWithThicknessProperty.AddRange(new[] {"SMBaseFlange",
+                                                    "SMBaseFlange",
+                                                    "LoftedBends",
+                                                    "SheetMetal",
+                                                    "OneBend",
+                                                    });
         }
     
-        
-        #region UI methods
 
-        #region Browse for files
-        private void BrowseForFolderButton_Click(object sender, EventArgs e)
+
+    #region UI methods
+
+    #region Browse for files
+    private void BrowseForFolderButton_Click(object sender, EventArgs e)
         {
             InitiateOpenFolder();
 
@@ -78,7 +89,18 @@ namespace PowerSM
                 selectAllToolStripMenuItem.PerformClick();
             }
         }
+        private void OutputFolder()
+        {
+            FolderBrowserDialog FolderBrowser = new FolderBrowserDialog();
+            FolderBrowser.ShowDialog();
 
+            if (!string.IsNullOrEmpty(FolderBrowser.SelectedPath))
+            {
+                // List all directories
+                 OutputDirectory = FolderBrowser.SelectedPath;
+                
+            }
+        }
         private void ListDirectory(TreeView treeView, string path)
         {
             treeView.Nodes.Clear();
@@ -115,7 +137,10 @@ namespace PowerSM
             if (!string.IsNullOrEmpty(CurrentDirectory))
                 System.Diagnostics.Process.Start("explorer.exe", CurrentDirectory);
         }
-
+        private void BrowseForOutPutFolder_Click(object sender, EventArgs e)
+        {
+            OutputFolder();
+        }
         private void optionsToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             var powersmoptions = new PowerSMOptions();
@@ -237,6 +262,21 @@ namespace PowerSM
                 return;
             }
 
+            double thickness;
+            if (!double.TryParse(ThicknessTextBox.Text, out thickness))
+            {
+                ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_parse_radius_value);
+                return;
+            }
+
+            decimal kfactor;
+            if (!decimal.TryParse(KFactorTextBox.Text, out kfactor))
+            {
+                ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_parse_radius_value);
+                return;
+            }
+
+
             // create selectednodes list 
 
             List<CustomTreeNode> SelectedTreeNodes = AllTreeViewNodes.FindAll(x => x.Checked == true).FindAll(x => File.Exists(x.FullFilePath));
@@ -259,45 +299,55 @@ namespace PowerSM
             foreach (CustomTreeNode element in SelectedTreeNodes)
             {
 
-                string filename = element.FullFilePath;
-
-                Task<string[]> ChangeRadiusAsyncTask = ChangeRadiusAsync(filename, Radius);
-                string[] result = await ChangeRadiusAsyncTask;
+                Task<string[]> ChangeSheetMetalFeaturesAsyncTask = ChangeSheetMetalFeaturesAsync(element, Radius,thickness,kfactor);
+                string[] result = await ChangeSheetMetalFeaturesAsyncTask;
                 _ProgressBar.PerformStep();
                 toolStripStatusLabel.Text = ((_ProgressBar.Value * 1.0) / (_ProgressBar.Maximum * 1.0)).ToString("P", System.Globalization.CultureInfo.InvariantCulture);
                 LogTextBox.Text += string.Join(System.Environment.NewLine, result);
 
             }
 
+            // Compress
+
+            if (!(string.IsNullOrEmpty(OutputDirectory) && true) )
+            {
+                toolStripStatusLabel.Text = "Compressing...";
+
+                Task task = Task.Run(() =>
+               System.IO.Compression.ZipFile.CreateFromDirectory(@"C\Temp\PowerSM", OutputDirectory)
+               );
+
+                task.Start();
+                task.Wait();
+            }
+
             toolStripStatusLabel.Text = "Ready";
 
         }
         
-        private async Task<string[]> ChangeRadiusAsync(string filename, double radius)
+        private async Task<string[]> ChangeSheetMetalFeaturesAsync(CustomTreeNode customtreenode, double radius,double thickness,decimal kfactor)
         {
 
-            return await Task.Run(() => ChangeRadius(filename, radius));
+            return await Task.Run(() => ChangeSheetMetalFeatures(customtreenode, radius,thickness, kfactor));
 
         }
-        
-
-        #region Change radius methods
 
 
-        private string[] ChangeRadius(string filename, double radius)
+        #region ChangeSheetMetalFeatures
+
+        private string[] ChangeSheetMetalFeatures(CustomTreeNode customtreenode, double radius, double thickness, decimal kfactor)
         {
-
-            double swSheetMetalThickness = 0;
-            int Error = 0;
-            int Warning = 0;
-            ModelDoc2 swModelDoc;
             List<string> Results = new List<string>();
-            Results.Add(string.Format("[{0}] PART FILENAME: {1}", DateTime.Now.ToString(), filename));
+            ModelDoc2 swModelDoc;
 
-            try
+           try
             {
+                int Error = 0;
+                int Warning = 0;
+                Results.Add(string.Format("[{0}] PART FILENAME: {1}", DateTime.Now.ToString(), customtreenode.FullFilePath)); 
+
                 swApp.DocumentVisible(false, (int)swDocumentTypes_e.swDocPART);
-                swModelDoc = swApp.OpenDoc6(filename, (int)swDocumentTypes_e.swDocPART, (int)swOpenDocOptions_e.swOpenDocOptions_Silent, string.Empty, ref Error, ref Warning);
+                swModelDoc = swApp.OpenDoc6(customtreenode.FullFilePath, (int)swDocumentTypes_e.swDocPART, (int)swOpenDocOptions_e.swOpenDocOptions_Silent, string.Empty, ref Error, ref Warning);
 
                 // All errors and warnings would throw a an error
                 if (Warning != 0)
@@ -308,6 +358,88 @@ namespace PowerSM
                 {
                     throw new OpenFileException(Error, false);
                 }
+
+            
+                // change thickness
+                if (thickness > 0)
+                {
+                    Results.AddRange(ChangeThickness(swModelDoc, thickness));
+
+                }
+                // change k-factor
+                if (kfactor > 0)
+                {
+                    Results.AddRange(ChangeKFactor(swModelDoc, kfactor));
+
+                }
+
+                // change radius
+
+                if (radius > 0)
+                {
+                    Results.AddRange(ChangeRadius(swModelDoc, radius));
+
+                }
+                // save 
+
+                if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["SaveAsZip"]) == true)
+                {
+                   
+                    // Delete old temp folder 
+                    string TempFolder = @"C:\Temp\PowerSM";
+                    System.IO.Directory.Delete(TempFolder);
+                    // Create new temp folder
+                    System.IO.Directory.CreateDirectory(TempFolder);
+                    string newfilename = string.Format(@"{0}\{1}", TempFolder, customtreenode.FullPath);
+                    Results.Add(System.Environment.NewLine);
+                    swModelDoc.SaveAs(newfilename);
+                    swApp.CloseDoc(string.Empty);
+                    Results.Add(System.Environment.NewLine);
+                    swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
+                }
+                else if (!String.IsNullOrEmpty(OutputDirectory))
+                {   string newfilename = string.Format(@"{0}\{1}",OutputDirectory,customtreenode.FullPath);
+                    Results.Add(System.Environment.NewLine);
+                    swModelDoc.SaveAs(newfilename);
+                    swApp.CloseDoc(string.Empty);
+                    swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
+                }
+                else
+                {
+                    // Save part
+                    swModelDoc.Save();
+                    swApp.CloseDoc(string.Empty);
+                    Results.Add(System.Environment.NewLine);
+                    swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
+                }
+                return Results.ToArray<string>();
+
+            }
+            catch(Exception exception)
+            {
+                var ErrorString = string.Format("[{0}] - ERROR: {1}", DateTime.Now.ToString(), exception.Message);
+                Results.Add(ErrorString);
+                Results.Add(System.Environment.NewLine);
+                swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
+                swApp.CloseDoc(string.Empty);
+                return Results.ToArray<string>();
+            }
+        
+
+            
+        }
+
+        private string[] ChangeRadius(ModelDoc2 swModelDoc, double radius)
+        {
+
+            double swSheetMetalThickness = 0;
+           
+            List<string> Results = new List<string>();
+     
+
+            try
+            {
+                
 
                 // Check unit system and convert radius to corresponding value
                 int LengthUnit = swModelDoc.LengthUnit;
@@ -380,30 +512,115 @@ namespace PowerSM
 
                 }
 
-                swModelDoc.Save();
-                swApp.CloseDoc(string.Empty);
-                Results.Add(System.Environment.NewLine);
-                swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
+              
                 return Results.ToArray<string>();
 
             }
             catch (Exception exception)
             {
-                var ErrorString = string.Format("[{0}] - ERROR: {1}", DateTime.Now.ToString(), exception.Message);
-                Results.Add(ErrorString);
-                Results.Add(System.Environment.NewLine);
-                swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
-                swApp.CloseDoc(string.Empty);
+
                 return Results.ToArray<string>();
 
             }
         }
-       // private string[] ChangeKFactor(ModelDoc2 swModelDoc, decimal KFactor)
-       // private string[] ChangeThickness(ModelDoc2 swModelDoc, double Thickness)
+        private string[] ChangeKFactor(ModelDoc2 swModelDoc, decimal KFactor)
+        {
+            List<string> Results = new List<string>();
+
+            var swCustomAllowance = new CustomBendAllowance();
+            swCustomAllowance.KFactor = (double)KFactor;
+
+            try
+            {
+
+                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
+                var swFeatures = swFeatureManager.GetFeatures(false);
+                foreach (Feature swFeature in swFeatures)
+                {
+                    dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithThicknessProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
+                    if (swSheetMetalDataFeature == null)
+                        continue;
+                    swSheetMetalDataFeature.SetCustomBendAllowance(swCustomAllowance);
+                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
+                    Results.Add(string.Format("\t * changing {0}'s kfactor to {1} mm: {2}.", swFeature.Name, KFactor.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+
+
+                }
+
+
+                return Results.ToArray<string>();
+
+            }
+            catch (Exception exception)
+            {
+
+                return Results.ToArray<string>();
+
+            }
+        }
+       private string[] ChangeThickness(ModelDoc2 swModelDoc, double Thickness)
+        {
+           
+
+            List<string> Results = new List<string>();
+
+
+            try
+            {
+
+
+                // Check unit system and convert radius to corresponding value
+                int LengthUnit = swModelDoc.LengthUnit;
+                switch (LengthUnit)
+                {
+                    case (int)swLengthUnit_e.swMIL:
+                        {
+                            if (UnitSystemCombBox.Text == "MMGS")
+                                break;
+                            else
+                                Thickness = 0.0393701 * Thickness;
+                            break;
+                        }
+                    case (int)swLengthUnit_e.swINCHES:
+                        if (UnitSystemCombBox.Text == "IPS")
+                            break;
+                        else
+                            Thickness = Thickness / 0.0393701;
+                        break;
+                    default:
+                        break;
+                }
+
+                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
+                var swFeatures = swFeatureManager.GetFeatures(false);
+                foreach (Feature swFeature in swFeatures)
+                {
+                    dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithThicknessProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
+                    if (swSheetMetalDataFeature == null)
+                        continue;
+                    swSheetMetalDataFeature.Thickness = Thickness * 1000.0;
+                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
+                    Results.Add(string.Format("\t * changing {0}'s thickness to {1} mm: {2}.", swFeature.Name, Thickness.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+
+
+                }
+
+
+                return Results.ToArray<string>();
+
+            }
+            catch (Exception exception)
+            {
+
+                return Results.ToArray<string>();
+
+            }
+        }
+
+
+
+
         #endregion
-
-
-  
 
       
     }

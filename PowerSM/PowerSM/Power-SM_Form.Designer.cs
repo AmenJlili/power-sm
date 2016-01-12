@@ -33,6 +33,10 @@
             this.FilesTreeGroupBox = new System.Windows.Forms.GroupBox();
             this.FilesTreeView = new System.Windows.Forms.TreeView();
             this.SheetMetalDataGroupBox = new System.Windows.Forms.GroupBox();
+            this.KFactorTextBox = new System.Windows.Forms.TextBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.ThicknessTextBox = new System.Windows.Forms.TextBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.NewRadiusLabel = new System.Windows.Forms.Label();
             this.MeasurementSystemLabel = new System.Windows.Forms.Label();
             this.UnitSystemCombBox = new System.Windows.Forms.ComboBox();
@@ -51,16 +55,13 @@
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optionsToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.helpToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutThisToolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
             this.OpenFolder = new System.Windows.Forms.Button();
             this.LogGroupBox = new System.Windows.Forms.GroupBox();
             this.LogTextBox = new System.Windows.Forms.TextBox();
-            this.helpToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.label1 = new System.Windows.Forms.Label();
-            this.ThicknessTextBox = new System.Windows.Forms.TextBox();
-            this.label2 = new System.Windows.Forms.Label();
-            this.KFactorTextBox = new System.Windows.Forms.TextBox();
+            this.BrowseForOutPutFolder = new System.Windows.Forms.Button();
             this.FilesTreeGroupBox.SuspendLayout();
             this.SheetMetalDataGroupBox.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -119,6 +120,38 @@
             this.SheetMetalDataGroupBox.TabIndex = 2;
             this.SheetMetalDataGroupBox.TabStop = false;
             this.SheetMetalDataGroupBox.Text = "Sheet Metal Data";
+            // 
+            // KFactorTextBox
+            // 
+            this.KFactorTextBox.Location = new System.Drawing.Point(110, 71);
+            this.KFactorTextBox.Name = "KFactorTextBox";
+            this.KFactorTextBox.Size = new System.Drawing.Size(65, 20);
+            this.KFactorTextBox.TabIndex = 8;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(15, 74);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(80, 13);
+            this.label2.TabIndex = 7;
+            this.label2.Text = "K-Factor Value:";
+            // 
+            // ThicknessTextBox
+            // 
+            this.ThicknessTextBox.Location = new System.Drawing.Point(110, 42);
+            this.ThicknessTextBox.Name = "ThicknessTextBox";
+            this.ThicknessTextBox.Size = new System.Drawing.Size(65, 20);
+            this.ThicknessTextBox.TabIndex = 6;
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(6, 45);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(89, 13);
+            this.label1.TabIndex = 5;
+            this.label1.Text = "Thickness Value:";
             // 
             // NewRadiusLabel
             // 
@@ -230,7 +263,7 @@
             // 
             this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
             this.quitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
             this.quitToolStripMenuItem.Text = "Quit";
             this.quitToolStripMenuItem.Click += new System.EventHandler(this.quitToolStripMenuItem_Click);
             // 
@@ -286,6 +319,13 @@
             this.helpToolStripMenuItem.Size = new System.Drawing.Size(52, 20);
             this.helpToolStripMenuItem.Text = "About";
             // 
+            // helpToolStripMenuItem1
+            // 
+            this.helpToolStripMenuItem1.Name = "helpToolStripMenuItem1";
+            this.helpToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F1)));
+            this.helpToolStripMenuItem1.Size = new System.Drawing.Size(160, 22);
+            this.helpToolStripMenuItem1.Text = "Help";
+            // 
             // aboutThisToolToolStripMenuItem
             // 
             this.aboutThisToolToolStripMenuItem.Name = "aboutThisToolToolStripMenuItem";
@@ -303,6 +343,7 @@
             // toolStripContainer1.ContentPanel
             // 
             this.toolStripContainer1.ContentPanel.AutoScroll = true;
+            this.toolStripContainer1.ContentPanel.Controls.Add(this.BrowseForOutPutFolder);
             this.toolStripContainer1.ContentPanel.Controls.Add(this.OpenFolder);
             this.toolStripContainer1.ContentPanel.Controls.Add(this.LogGroupBox);
             this.toolStripContainer1.ContentPanel.Controls.Add(this._ProgressBar);
@@ -354,44 +395,15 @@
             this.LogTextBox.Size = new System.Drawing.Size(471, 80);
             this.LogTextBox.TabIndex = 0;
             // 
-            // helpToolStripMenuItem1
+            // BrowseForOutPutFolder
             // 
-            this.helpToolStripMenuItem1.Name = "helpToolStripMenuItem1";
-            this.helpToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F1)));
-            this.helpToolStripMenuItem1.Size = new System.Drawing.Size(160, 22);
-            this.helpToolStripMenuItem1.Text = "Help";
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(6, 45);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(89, 13);
-            this.label1.TabIndex = 5;
-            this.label1.Text = "Thickness Value:";
-            // 
-            // ThicknessTextBox
-            // 
-            this.ThicknessTextBox.Location = new System.Drawing.Point(110, 42);
-            this.ThicknessTextBox.Name = "ThicknessTextBox";
-            this.ThicknessTextBox.Size = new System.Drawing.Size(65, 20);
-            this.ThicknessTextBox.TabIndex = 6;
-            // 
-            // label2
-            // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(15, 74);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(80, 13);
-            this.label2.TabIndex = 7;
-            this.label2.Text = "K-Factor Value:";
-            // 
-            // KFactorTextBox
-            // 
-            this.KFactorTextBox.Location = new System.Drawing.Point(110, 71);
-            this.KFactorTextBox.Name = "KFactorTextBox";
-            this.KFactorTextBox.Size = new System.Drawing.Size(65, 20);
-            this.KFactorTextBox.TabIndex = 8;
+            this.BrowseForOutPutFolder.Location = new System.Drawing.Point(398, 290);
+            this.BrowseForOutPutFolder.Name = "BrowseForOutPutFolder";
+            this.BrowseForOutPutFolder.Size = new System.Drawing.Size(94, 38);
+            this.BrowseForOutPutFolder.TabIndex = 9;
+            this.BrowseForOutPutFolder.Text = "Output folder...";
+            this.BrowseForOutPutFolder.UseVisualStyleBackColor = true;
+            this.BrowseForOutPutFolder.Click += new System.EventHandler(this.BrowseForOutPutFolder_Click);
             // 
             // Power_SM_Form
             // 
@@ -461,5 +473,6 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox ThicknessTextBox;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.Button BrowseForOutPutFolder;
     }
 }
