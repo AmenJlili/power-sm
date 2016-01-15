@@ -11,7 +11,7 @@ using System.IO.Compression;
 using System.Globalization;
 namespace PowerSM
 {
-    public partial class Power_SM_Form : Form
+    public partial class PowerGeometryForm : Form
     {
 
         string CurrentDirectory;
@@ -22,7 +22,7 @@ namespace PowerSM
         List<string> swSheetMetalFeatureTypeWithThicknessProperty;
         List<string> swSheetMetalFeatureTypeWithKFactorProperty;
         delegate bool del(SldWorks swApp, string filename, double radius);
-        public Power_SM_Form(SldWorks swApp_)
+        public PowerGeometryForm(SldWorks swApp_)
         {
             InitializeComponent();
             swApp = swApp_;
@@ -154,7 +154,7 @@ namespace PowerSM
         }
         private void optionsToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            var powersmoptions = new PowerSMOptions();
+            var powersmoptions = new PowerGeometryOptions();
             powersmoptions.ShowDialog();
         }
 
@@ -325,10 +325,8 @@ namespace PowerSM
                 toolStripStatusLabel.Text = "Compressing...";
 
                 Task task = Task.Run(() =>
-               System.IO.Compression.ZipFile.CreateFromDirectory(@"C\Temp\PowerSM", OutputDirectory)
+               System.IO.Compression.ZipFile.CreateFromDirectory(@"C:\Temp\PowerSM", OutputDirectory)
                );
-
-                task.Start();
                 task.Wait();
             }
 
@@ -393,9 +391,19 @@ namespace PowerSM
                 }
                 // save 
 
-                if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["SaveAsZip"]) == true)
+                 if (!String.IsNullOrEmpty(OutputDirectory))
                 {
-                   
+                    string newfilename = string.Format(@"{0}\{1}", OutputDirectory, customtreenode.FullPath);
+                    Results.Add(System.Environment.NewLine);
+                    object ExportData;
+                    var saveresult = swModelDoc.Extension.SaveAs(newfilename,(int)swSaveAsVersion_e.swSaveAsCurrentVersion,(int)swSaveAsOptions_e.swSaveAsOptions_Silent,ExportData, ref Error,ref Warnings);
+                    swModelDoc.SaveAsSilent(newfilename,true);
+                    swApp.CloseDoc(string.Empty);
+                    swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
+                }
+                 else if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]) == true && !String.IsNullOrEmpty(OutputDirectory))
+                {
+                    swApp.SendMsgToUser("true");
                     // Delete old temp folder 
                     string TempFolder = @"C:\Temp\PowerSM";
                     System.IO.Directory.Delete(TempFolder);
@@ -403,18 +411,12 @@ namespace PowerSM
                     System.IO.Directory.CreateDirectory(TempFolder);
                     string newfilename = string.Format(@"{0}\{1}", TempFolder, customtreenode.FullPath);
                     Results.Add(System.Environment.NewLine);
-                    swModelDoc.SaveAs(newfilename);
+                    swModelDoc.SaveAsSilent(newfilename, true);
                     swApp.CloseDoc(string.Empty);
                     Results.Add(System.Environment.NewLine);
                     swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
                 }
-                else if (!String.IsNullOrEmpty(OutputDirectory))
-                {   string newfilename = string.Format(@"{0}\{1}",OutputDirectory,customtreenode.FullPath);
-                    Results.Add(System.Environment.NewLine);
-                    swModelDoc.SaveAs(newfilename);
-                    swApp.CloseDoc(string.Empty);
-                    swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
-                }
+               
                 else
                 {
                     // Save part
@@ -641,7 +643,7 @@ namespace PowerSM
 
         private void partViewerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var partviewform = new PartViewForm();
+            var partviewform = new PartViewer();
             partviewform.Show();
         }
     }

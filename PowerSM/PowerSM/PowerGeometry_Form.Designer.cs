@@ -1,6 +1,6 @@
 ﻿namespace PowerSM
 {
-    partial class Power_SM_Form
+    partial class PowerGeometryForm
     {
         /// <summary>
         /// Required designer variable.
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Power_SM_Form));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PowerGeometryForm));
             this.BrowseForFolderButton = new System.Windows.Forms.Button();
             this.FilesTreeGroupBox = new System.Windows.Forms.GroupBox();
             this.FilesTreeView = new System.Windows.Forms.TreeView();
@@ -54,6 +54,7 @@
             this.unSelectAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.optionsToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.partViewerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutThisToolToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -62,7 +63,6 @@
             this.OpenFolder = new System.Windows.Forms.Button();
             this.LogGroupBox = new System.Windows.Forms.GroupBox();
             this.LogTextBox = new System.Windows.Forms.TextBox();
-            this.partViewerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.FilesTreeGroupBox.SuspendLayout();
             this.SheetMetalDataGroupBox.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -307,9 +307,17 @@
             // 
             this.optionsToolStripMenuItem1.Name = "optionsToolStripMenuItem1";
             this.optionsToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.optionsToolStripMenuItem1.Size = new System.Drawing.Size(178, 22);
+            this.optionsToolStripMenuItem1.Size = new System.Drawing.Size(174, 22);
             this.optionsToolStripMenuItem1.Text = "Options";
             this.optionsToolStripMenuItem1.Click += new System.EventHandler(this.optionsToolStripMenuItem1_Click);
+            // 
+            // partViewerToolStripMenuItem
+            // 
+            this.partViewerToolStripMenuItem.Enabled = false;
+            this.partViewerToolStripMenuItem.Name = "partViewerToolStripMenuItem";
+            this.partViewerToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.P)));
+            this.partViewerToolStripMenuItem.Size = new System.Drawing.Size(174, 22);
+            this.partViewerToolStripMenuItem.Text = "Part Viewer";
             // 
             // helpToolStripMenuItem
             // 
@@ -407,14 +415,6 @@
             this.LogTextBox.Size = new System.Drawing.Size(471, 80);
             this.LogTextBox.TabIndex = 0;
             // 
-            // partViewerToolStripMenuItem
-            // 
-            this.partViewerToolStripMenuItem.Name = "partViewerToolStripMenuItem";
-            this.partViewerToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.W)));
-            this.partViewerToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
-            this.partViewerToolStripMenuItem.Text = "Part Viewer";
-            this.partViewerToolStripMenuItem.Click += new System.EventHandler(this.partViewerToolStripMenuItem_Click);
-            // 
             // Power_SM_Form
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -428,7 +428,7 @@
             this.MinimizeBox = false;
             this.Name = "Power_SM_Form";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
-            this.Text = "Power Radius Tool";
+            this.Text = "Power Geometry Tool";
             this.Load += new System.EventHandler(this.Power_SM_Form_Load);
             this.FilesTreeGroupBox.ResumeLayout(false);
             this.SheetMetalDataGroupBox.ResumeLayout(false);

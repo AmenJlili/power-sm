@@ -1,6 +1,6 @@
 ﻿namespace PowerSM
 {
-    partial class PowerSMOptions
+    partial class PowerGeometryOptions
     {
         /// <summary>
         /// Required designer variable.
@@ -62,14 +62,14 @@
             this.groupBox1.Controls.Add(this.ArchiveInZipFormatCheckBox);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(461, 217);
+            this.groupBox1.Size = new System.Drawing.Size(461, 90);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Options";
             // 
             // SaveOptionsButton
             // 
-            this.SaveOptionsButton.Location = new System.Drawing.Point(361, 235);
+            this.SaveOptionsButton.Location = new System.Drawing.Point(361, 108);
             this.SaveOptionsButton.Name = "SaveOptionsButton";
             this.SaveOptionsButton.Size = new System.Drawing.Size(112, 27);
             this.SaveOptionsButton.TabIndex = 3;
@@ -81,13 +81,13 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(485, 274);
+            this.ClientSize = new System.Drawing.Size(485, 141);
             this.Controls.Add(this.SaveOptionsButton);
             this.Controls.Add(this.groupBox1);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "PowerSMOptions";
-            this.Text = "Power-SM Options";
+            this.Text = "Power Geometry Options";
             this.Load += new System.EventHandler(this.powersmoptions_Load);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();

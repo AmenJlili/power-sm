@@ -1,6 +1,6 @@
 ﻿namespace PowerSM
 {
-    partial class PartViewForm
+    partial class PartViewer
     {
         /// <summary>
         /// Required designer variable.
@@ -28,19 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.SuspendLayout();
-            // 
-            // PartViewForm
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(471, 284);
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.Name = "PartViewForm";
-            this.Text = "Part Viewer";
-            this.ResumeLayout(false);
-
+            this.Text = "PartViewer";
         }
 
         #endregion

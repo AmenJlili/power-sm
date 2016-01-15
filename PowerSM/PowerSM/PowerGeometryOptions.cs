@@ -10,9 +10,9 @@ using System.Windows.Forms;
 
 namespace PowerSM
 {
-    public partial class PowerSMOptions : Form
+    public partial class PowerGeometryOptions : Form
     {
-        public PowerSMOptions()
+        public PowerGeometryOptions()
         {
             InitializeComponent();
         }
