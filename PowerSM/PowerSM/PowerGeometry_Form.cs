@@ -320,12 +320,17 @@ namespace PowerSM
 
             // Compress
 
-            if (!(string.IsNullOrEmpty(OutputDirectory) && true) )
+            if ((!(string.IsNullOrEmpty(OutputDirectory)) && Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"])))
             {
                 toolStripStatusLabel.Text = "Compressing...";
 
                 Task task = Task.Run(() =>
-               System.IO.Compression.ZipFile.CreateFromDirectory(@"C:\Temp\PowerSM", OutputDirectory)
+               {
+                   swApp.SendMsgToUser("1");
+                   System.IO.Compression.ZipFile.CreateFromDirectory(@"C:\Temp\PowerSM", OutputDirectory);
+
+               }
+
                );
                 task.Wait();
             }
@@ -386,24 +391,26 @@ namespace PowerSM
 
                 if (radius > 0)
                 {
-                   
+
                     Results.AddRange(ChangeRadius(swModelDoc, radius));
                 }
+
                 // save 
 
                  if (!String.IsNullOrEmpty(OutputDirectory))
                 {
                     string newfilename = string.Format(@"{0}\{1}", OutputDirectory, customtreenode.FullPath);
                     Results.Add(System.Environment.NewLine);
-                    object ExportData;
-                    var saveresult = swModelDoc.Extension.SaveAs(newfilename,(int)swSaveAsVersion_e.swSaveAsCurrentVersion,(int)swSaveAsOptions_e.swSaveAsOptions_Silent,ExportData, ref Error,ref Warnings);
-                    swModelDoc.SaveAsSilent(newfilename,true);
+                    object ExportData = null;
+                    swApp.SendMsgToUser(newfilename);
+                    var saveresult = swModelDoc.Extension.SaveAs(newfilename,(int)swSaveAsVersion_e.swSaveAsCurrentVersion,(int)swSaveAsOptions_e.swSaveAsOptions_Silent,ExportData, ref Error,ref Warning);
+                    Results.Add(string.Format("\n\t Saving... : {0} Error: {1} Warning: {2} ", saveresult.ToString(),Error,Warning));
                     swApp.CloseDoc(string.Empty);
                     swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
                 }
                  else if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]) == true && !String.IsNullOrEmpty(OutputDirectory))
                 {
-                    swApp.SendMsgToUser("true");
+                   
                     // Delete old temp folder 
                     string TempFolder = @"C:\Temp\PowerSM";
                     System.IO.Directory.Delete(TempFolder);
@@ -411,7 +418,9 @@ namespace PowerSM
                     System.IO.Directory.CreateDirectory(TempFolder);
                     string newfilename = string.Format(@"{0}\{1}", TempFolder, customtreenode.FullPath);
                     Results.Add(System.Environment.NewLine);
-                    swModelDoc.SaveAsSilent(newfilename, true);
+                    object ExportData = null;
+                    var saveresult = swModelDoc.Extension.SaveAs(newfilename, (int)swSaveAsVersion_e.swSaveAsCurrentVersion, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, ExportData, ref Error, ref Warning);
+                    Results.Add(string.Format("\n\t Saving... : {0} Error: {1} Warning: {2} ", saveresult.ToString(), Error, Warning));
                     swApp.CloseDoc(string.Empty);
                     Results.Add(System.Environment.NewLine);
                     swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
