@@ -133,25 +133,6 @@
   <ItemGroup>
     <None Include="Resources\folder_png.png" />
   </ItemGroup>
-  <ItemGroup>
-    <COMReference Include="AxEModelView">
-      <Guid>{BBF7DA7F-4CCB-4FB6-8743-EF1A199DCECD}</Guid>
-      <VersionMajor>15</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>aximp</WrapperTool>
-      <Isolated>False</Isolated>
-    </COMReference>
-    <COMReference Include="EModelView">
-      <Guid>{BBF7DA7F-4CCB-4FB6-8743-EF1A199DCECD}</Guid>
-      <VersionMajor>15</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
