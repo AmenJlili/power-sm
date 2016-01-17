@@ -22,7 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <RegisterForComInterop>true</RegisterForComInterop>
-    <PlatformTarget>x64</PlatformTarget>
+    <PlatformTarget>x86</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -72,26 +72,26 @@
       <DependentUpon>AboutBox.cs</DependentUpon>
     </Compile>
     <Compile Include="ErrorEchoer.cs" />
-    <Compile Include="PartViewForm.cs">
+    <Compile Include="PartViewer.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="PartViewForm.Designer.cs">
-      <DependentUpon>PartViewForm.cs</DependentUpon>
+    <Compile Include="PartViewer.Designer.cs">
+      <DependentUpon>PartViewer.cs</DependentUpon>
     </Compile>
     <Compile Include="power-sm.cs" />
-    <Compile Include="Power-SM_Form.cs">
+    <Compile Include="PowerGeometry_Form.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Power-SM_Form.Designer.cs">
-      <DependentUpon>Power-SM_Form.cs</DependentUpon>
+    <Compile Include="PowerGeometry_Form.Designer.cs">
+      <DependentUpon>PowerGeometry_Form.cs</DependentUpon>
     </Compile>
     <Compile Include="PowerSMEnums.cs" />
-    <Compile Include="PowerSMOptions.cs">
+    <Compile Include="PowerGeometryOptions.cs">
       <SubType>Form</SubType>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="PowerSMOptions.Designer.cs">
-      <DependentUpon>PowerSMOptions.cs</DependentUpon>
+    <Compile Include="PowerGeometryOptions.Designer.cs">
+      <DependentUpon>PowerGeometryOptions.cs</DependentUpon>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -105,14 +105,11 @@
     <EmbeddedResource Include="AboutBox.resx">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="PartViewForm.resx">
-      <DependentUpon>PartViewForm.cs</DependentUpon>
+    <EmbeddedResource Include="PowerGeometry_Form.resx">
+      <DependentUpon>PowerGeometry_Form.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Power-SM_Form.resx">
-      <DependentUpon>Power-SM_Form.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="PowerSMOptions.resx">
-      <DependentUpon>PowerSMOptions.cs</DependentUpon>
+    <EmbeddedResource Include="PowerGeometryOptions.resx">
+      <DependentUpon>PowerGeometryOptions.cs</DependentUpon>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">

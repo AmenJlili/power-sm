@@ -10,9 +10,9 @@ using System.Windows.Forms;
 
 namespace PowerSM
 {
-    public partial class PartViewForm : Form
+    public partial class PartViewer : Form
     {
-        public PartViewForm()
+        public PartViewer()
         {
             InitializeComponent();
         }
