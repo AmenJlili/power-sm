@@ -304,6 +304,9 @@ namespace PowerSM
             _ProgressBar.Maximum = ProgressMaximum;
             LogTextBox.Text = string.Empty;
 
+            // if ArchiveZipFormat is true, prepare temp directory etc..
+            if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]))
+            PrepareZip();
             // sleeves roll-up:
 
 
@@ -322,12 +325,14 @@ namespace PowerSM
 
             if ((!(string.IsNullOrEmpty(OutputDirectory)) && Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"])))
             {
+            
+
                 toolStripStatusLabel.Text = "Compressing...";
 
                 Task task = Task.Run(() =>
                {
-                   swApp.SendMsgToUser("1");
-                   System.IO.Compression.ZipFile.CreateFromDirectory(@"C:\Temp\PowerSM", OutputDirectory);
+                  
+                   System.IO.Compression.ZipFile.CreateFromDirectory(@"C:\Temp\PowerSM", String.Format(@"{0}\powersm.zip",OutputDirectory));
 
                }
 
@@ -349,6 +354,33 @@ namespace PowerSM
 
         #region ChangeSheetMetalFeatures
 
+        private void PrepareZip()
+        {
+            string TempFolder = @"C:\Temp\PowerSM";
+            // Create new temp folder
+            System.IO.Directory.CreateDirectory(TempFolder);
+
+            // Delete old temp folder
+            System.IO.DirectoryInfo tempfolderdirectory = new DirectoryInfo(TempFolder);
+            foreach (FileInfo file in tempfolderdirectory.GetFiles())
+            {
+                file.Delete();
+            }
+            foreach (DirectoryInfo dir in tempfolderdirectory.GetDirectories())
+            {
+                dir.Delete(true);
+            }
+            // Create new temp folder
+            System.IO.Directory.CreateDirectory(TempFolder);
+            // try to delete old archivage
+            try 
+            {
+                System.IO.File.Delete(String.Format(@"{0}\powersm.zip", OutputDirectory));
+            }
+            catch (Exception) 
+            {
+            }
+        }
         private string[] ChangeSheetMetalFeatures(CustomTreeNode customtreenode, double radius, double thickness, decimal kfactor)
         {
             List<string> Results = new List<string>();
@@ -397,34 +429,35 @@ namespace PowerSM
 
                 // save 
 
-                 if (!String.IsNullOrEmpty(OutputDirectory))
+               if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]) && !String.IsNullOrEmpty(OutputDirectory))
                 {
-                    string newfilename = string.Format(@"{0}\{1}", OutputDirectory, customtreenode.FullPath);
-                    Results.Add(System.Environment.NewLine);
-                    object ExportData = null;
-                    swApp.SendMsgToUser(newfilename);
-                    var saveresult = swModelDoc.Extension.SaveAs(newfilename,(int)swSaveAsVersion_e.swSaveAsCurrentVersion,(int)swSaveAsOptions_e.swSaveAsOptions_Silent,ExportData, ref Error,ref Warning);
-                    Results.Add(string.Format("\n\t Saving... : {0} Error: {1} Warning: {2} ", saveresult.ToString(),Error,Warning));
-                    swApp.CloseDoc(string.Empty);
-                    swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
-                }
-                 else if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]) == true && !String.IsNullOrEmpty(OutputDirectory))
-                {
-                   
-                    // Delete old temp folder 
-                    string TempFolder = @"C:\Temp\PowerSM";
-                    System.IO.Directory.Delete(TempFolder);
-                    // Create new temp folder
-                    System.IO.Directory.CreateDirectory(TempFolder);
+                   string TempFolder = @"C:\Temp\PowerSM";
+                  
                     string newfilename = string.Format(@"{0}\{1}", TempFolder, customtreenode.FullPath);
-                    Results.Add(System.Environment.NewLine);
-                    object ExportData = null;
-                    var saveresult = swModelDoc.Extension.SaveAs(newfilename, (int)swSaveAsVersion_e.swSaveAsCurrentVersion, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, ExportData, ref Error, ref Warning);
-                    Results.Add(string.Format("\n\t Saving... : {0} Error: {1} Warning: {2} ", saveresult.ToString(), Error, Warning));
+                    // create full directory for new file
+                    System.IO.Directory.CreateDirectory(newfilename);
+                    System.IO.Directory.Delete(newfilename);
+                    // save
+                    var saveresult = swModelDoc.Extension.SaveAs(newfilename, (int)swSaveAsVersion_e.swSaveAsCurrentVersion, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref Error, ref Warning);
+                    Results.Add(string.Format("\n\t * Saving to temporary folder... : {0} Error: {1} Warning: {2} ", saveresult.ToString(), Error, Warning));
                     swApp.CloseDoc(string.Empty);
                     Results.Add(System.Environment.NewLine);
                     swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
                 }
+
+               else if (!String.IsNullOrEmpty(OutputDirectory))
+               {
+                   string newfilename = string.Format(@"{0}\{1}", OutputDirectory, customtreenode.FullPath);
+                   // create full directory for new file
+                   System.IO.Directory.CreateDirectory(newfilename);
+                   System.IO.Directory.Delete(newfilename);
+                   // save
+                   var saveresult = swModelDoc.Extension.SaveAs(newfilename, (int)swSaveAsVersion_e.swSaveAsCurrentVersion, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref Error, ref Warning);
+                   Results.Add(string.Format("\n\t * Saving... : {0} Error: {1} Warning: {2} \n", saveresult.ToString(), Error, Warning));
+                   Results.Add(System.Environment.NewLine);
+                   swApp.CloseDoc(string.Empty);
+                   swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
+               }
                
                 else
                 {
