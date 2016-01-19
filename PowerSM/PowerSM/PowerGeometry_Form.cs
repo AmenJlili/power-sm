@@ -548,12 +548,14 @@ namespace PowerSM
                                 var dif = (radius / 1000.0) - swSheetMetalDataFeature.BendRadius; // difference between old radius and new radius
                                 if (dif >= 0)
                                 {
-                                    swSheetMetalDataFeature.OffsetDistance = dif + 0.5 * swSheetMetalThickness;
+                                    swSheetMetalDataFeature.PositionOffsetType = (int)swFlangeOffsetTypes_e.swFlangeOffsetBlind;
+                                    swSheetMetalDataFeature.PositionOffsetDistance = dif + 0.5 * swSheetMetalThickness;
                                 }
                                 else
                                 {
+                                    swSheetMetalDataFeature.PositionOffsetType = (int)swFlangeOffsetTypes_e.swFlangeOffsetBlind;
                                     swSheetMetalDataFeature.ReversePositionOffset = true;
-                                    swSheetMetalDataFeature.OffsetDistance = dif + 0.5 * swSheetMetalThickness;
+                                    swSheetMetalDataFeature.PositionOffsetDistance = dif + 0.5 * swSheetMetalThickness;
 
                                 }
                             }
@@ -687,6 +689,11 @@ namespace PowerSM
         {
             var partviewform = new PartViewer();
             partviewform.Show();
+        }
+
+        private void helpToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start("https://github.com/jliliamen/power-sm/wiki/PowerGeometry");
         }
     }
     public class CustomTreeNode : TreeNode

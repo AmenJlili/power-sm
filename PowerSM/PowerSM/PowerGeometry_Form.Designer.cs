@@ -80,7 +80,7 @@
             this.BrowseForFolderButton.Name = "BrowseForFolderButton";
             this.BrowseForFolderButton.Size = new System.Drawing.Size(94, 38);
             this.BrowseForFolderButton.TabIndex = 0;
-            this.BrowseForFolderButton.Text = "Browse folder...";
+            this.BrowseForFolderButton.Text = "Source folder...";
             this.BrowseForFolderButton.UseVisualStyleBackColor = true;
             this.BrowseForFolderButton.Click += new System.EventHandler(this.BrowseForFolderButton_Click);
             // 
@@ -264,7 +264,7 @@
             // 
             this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
             this.quitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.quitToolStripMenuItem.Text = "Quit";
             this.quitToolStripMenuItem.Click += new System.EventHandler(this.quitToolStripMenuItem_Click);
             // 
@@ -335,6 +335,7 @@
             this.helpToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F1)));
             this.helpToolStripMenuItem1.Size = new System.Drawing.Size(160, 22);
             this.helpToolStripMenuItem1.Text = "Help";
+            this.helpToolStripMenuItem1.Click += new System.EventHandler(this.helpToolStripMenuItem1_Click);
             // 
             // aboutThisToolToolStripMenuItem
             // 
@@ -415,7 +416,7 @@
             this.LogTextBox.Size = new System.Drawing.Size(471, 80);
             this.LogTextBox.TabIndex = 0;
             // 
-            // Power_SM_Form
+            // PowerGeometryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -426,7 +427,7 @@
             this.MainMenuStrip = this.menuStrip1;
             this.MaximizeBox = false;
             this.MinimizeBox = false;
-            this.Name = "Power_SM_Form";
+            this.Name = "PowerGeometryForm";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "Power Geometry Tool";
             this.Load += new System.EventHandler(this.Power_SM_Form_Load);
