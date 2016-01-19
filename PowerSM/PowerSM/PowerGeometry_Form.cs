@@ -538,14 +538,14 @@ namespace PowerSM
                         swSheetMetalDataFeature.OverrideRadius = true;
 
                     if (swSheetMetalDataFeature is EdgeFlangeFeatureData)
-                        swSheetMetalDataFeature.UseDefaultBendRadius = false;
                     {
+                        swSheetMetalDataFeature.UseDefaultBendRadius = false;
                         // If Edge Flange's bend is outside of the base flange, compensation is needed in order to respect outside dimensions
                         if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ForceDimensionalRespect"]))
                         {
                             if (swSheetMetalDataFeature.PositionType == (int)swFlangePositionTypes_e.swFlangePositionTypeBendOutside)
                             {
-                                var dif = radius * 1000.0 - swSheetMetalDataFeature.BendRadius; // difference between old radius and new radius
+                                var dif = (radius / 1000.0) - swSheetMetalDataFeature.BendRadius; // difference between old radius and new radius
                                 if (dif >= 0)
                                 {
                                     swSheetMetalDataFeature.OffsetDistance = dif + 0.5 * swSheetMetalThickness;
