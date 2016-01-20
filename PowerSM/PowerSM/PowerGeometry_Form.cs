@@ -287,6 +287,13 @@ namespace PowerSM
                 return;
             }
 
+            // check if list has nodes
+
+            if (FilesTreeView.Nodes.Count == 0)
+            {
+                ErrorEchoer.Err((int)PowerSMEnums.Errors.Empty_Tree);
+                return;
+            }
 
             // create selectednodes list 
 
@@ -431,8 +438,7 @@ namespace PowerSM
 
                if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]) && !String.IsNullOrEmpty(OutputDirectory))
                 {
-                   string TempFolder = @"C:\Temp\PowerSM";
-                  
+                    string TempFolder = @"C:\Temp\PowerSM";
                     string newfilename = string.Format(@"{0}\{1}", TempFolder, customtreenode.FullPath);
                     // create full directory for new file
                     System.IO.Directory.CreateDirectory(newfilename);
@@ -543,18 +549,20 @@ namespace PowerSM
                         // If Edge Flange's bend is outside of the base flange, compensation is needed in order to respect outside dimensions
                         if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ForceDimensionalRespect"]))
                         {
+                           
                             if (swSheetMetalDataFeature.PositionType == (int)swFlangePositionTypes_e.swFlangePositionTypeBendOutside)
                             {
+                                swSheetMetalDataFeature.UsePositionOffset = true;
                                 var dif = (radius / 1000.0) - swSheetMetalDataFeature.BendRadius; // difference between old radius and new radius
                                 if (dif >= 0)
                                 {
                                     swSheetMetalDataFeature.PositionOffsetType = (int)swFlangeOffsetTypes_e.swFlangeOffsetBlind;
+                                    swSheetMetalDataFeature.ReversePositionOffset = true;
                                     swSheetMetalDataFeature.PositionOffsetDistance = dif + 0.5 * swSheetMetalThickness;
                                 }
                                 else
                                 {
                                     swSheetMetalDataFeature.PositionOffsetType = (int)swFlangeOffsetTypes_e.swFlangeOffsetBlind;
-                                    swSheetMetalDataFeature.ReversePositionOffset = true;
                                     swSheetMetalDataFeature.PositionOffsetDistance = dif + 0.5 * swSheetMetalThickness;
 
                                 }
@@ -694,6 +702,11 @@ namespace PowerSM
         private void helpToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             System.Diagnostics.Process.Start("https://github.com/jliliamen/power-sm/wiki/PowerGeometry");
+        }
+
+        private void FilesTreeView_AfterSelect(object sender, TreeViewEventArgs e)
+        {
+
         }
     }
     public class CustomTreeNode : TreeNode

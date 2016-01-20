@@ -28,6 +28,9 @@ namespace PowerSM
                 case (int)PowerSMEnums.Errors.Cannot_Write_Log_File:
                     EchoMessage("Cannot write log file.");
                     break;
+                case (int)PowerSMEnums.Errors.Empty_Tree:
+                    EchoMessage("Files tree is empty");
+                    break;
                 default:
                     break;
             }

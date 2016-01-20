@@ -21,7 +21,8 @@ namespace PowerSM
             Cannot_Write_Log_File = 1,
             Cannot_parse_radius_value = 2,
             cannot_parse_kfacor = 3,
-            cannot_parse_thickness = 4
+            cannot_parse_thickness = 4,
+            Empty_Tree = 5
 
         }
     }

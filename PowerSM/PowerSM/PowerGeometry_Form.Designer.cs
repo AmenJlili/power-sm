@@ -104,6 +104,7 @@
             this.FilesTreeView.Size = new System.Drawing.Size(475, 220);
             this.FilesTreeView.TabIndex = 0;
             this.FilesTreeView.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.FilesTreeView_AfterCheck);
+            this.FilesTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.FilesTreeView_AfterSelect);
             // 
             // SheetMetalDataGroupBox
             // 
@@ -264,7 +265,7 @@
             // 
             this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
             this.quitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
             this.quitToolStripMenuItem.Text = "Quit";
             this.quitToolStripMenuItem.Click += new System.EventHandler(this.quitToolStripMenuItem_Click);
             // 

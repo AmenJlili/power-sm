@@ -64,14 +64,14 @@
             this.groupBox1.Controls.Add(this.ArchiveInZipFormatCheckBox);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(461, 90);
+            this.groupBox1.Size = new System.Drawing.Size(488, 90);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Options";
             // 
             // SaveOptionsButton
             // 
-            this.SaveOptionsButton.Location = new System.Drawing.Point(404, 108);
+            this.SaveOptionsButton.Location = new System.Drawing.Point(431, 108);
             this.SaveOptionsButton.Name = "SaveOptionsButton";
             this.SaveOptionsButton.Size = new System.Drawing.Size(69, 27);
             this.SaveOptionsButton.TabIndex = 3;
@@ -83,7 +83,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(485, 143);
+            this.ClientSize = new System.Drawing.Size(512, 143);
             this.Controls.Add(this.SaveOptionsButton);
             this.Controls.Add(this.groupBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
