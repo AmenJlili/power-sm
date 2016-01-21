@@ -15,7 +15,7 @@
 
 # About:
 
-Power-SM ,short for Power-Sheet Metal, is C# COM Add-in for SolidWorks 64 bits.
+Power-SM ,short for Power-Sheet Metal, is C# COM Add-in for SolidWorks.
 
 <p align="justify">The main purpose of this add-in to perform tedious operations Sheet Metal CAD files and let mechancial design engineers focus on the design.
 
