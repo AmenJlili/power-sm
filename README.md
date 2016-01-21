@@ -1,13 +1,12 @@
 #power-sm Add-in for SolidWorks
 
-<center><img src="http://picpaste.com/pics/Capture-NN48S575.1453416434.JPG"></center>
+<center><img src="http://picpaste.com/pics/Capture-NN48S575.1453416434.JPG"></img></center>
 <br><center><b>Screenshot: </b>Pre-release 1.1</center>
 # Version History:
 
 - 01/20/2016: 1.1  release
 - 01/03/2016: 1.0  release
-- 12/31/2015: 1.0a pre-release
-- 12/30/2015: 1.0  pre-release
+
 
 
 
