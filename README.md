@@ -23,8 +23,8 @@ Many engineers are faced with cumbersome tasks of modifying hundreds of CAD file
 The main functionalities will allow users to:
 
 - PowerGeometry Tool: Change radius, kfactor and thickness
-- PowerConvert Tool: Convert neutral files format to sheet metal SolidWorks part
-- PowerNest Tool (future release): Nest for sheet metal parts
+- PowerConvert Tool: Convert neutral format files to sheet metal SolidWorks part files
+- PowerNest Tool (future release): Nesting tool for sheet metal parts
 
 
 # Notes to developers
