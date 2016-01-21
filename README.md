@@ -23,10 +23,9 @@ Many engineers are faced with cumbersome tasks of modifying hundreds of CAD file
 
 The main functionalities will allow users to:
 
-- Change radius, kfactor and thickness (PowerGeometry Tool)
-- Add custom properties (Future feature)
-- Extract custom properties (Future feature)
-- Generate CSV of custom properties (Future feature)
+- PowerGeometry Tool: Change radius, kfactor and thickness
+- PowerConvert Tool: Convert neutral files format to sheet metal SolidWorks part
+- PowerNest Tool (future release): Nest for sheet metal parts
 
 
 # Notes to developers
