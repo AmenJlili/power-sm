@@ -22,6 +22,7 @@ namespace PowerSM
         List<string> swSheetMetalFeatureTypeWithThicknessProperty;
         List<string> swSheetMetalFeatureTypeWithKFactorProperty;
         delegate bool del(SldWorks swApp, string filename, double radius);
+
         public PowerGeometryForm(SldWorks swApp_)
         {
             InitializeComponent();
@@ -445,7 +446,7 @@ namespace PowerSM
                     System.IO.Directory.Delete(newfilename);
                     // save
                     var saveresult = swModelDoc.Extension.SaveAs(newfilename, (int)swSaveAsVersion_e.swSaveAsCurrentVersion, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref Error, ref Warning);
-                    Results.Add(string.Format("\n\t * Saving to temporary folder... : {0} Error: {1} Warning: {2} ", saveresult.ToString(), Error, Warning));
+                    Results.Add(string.Format("\n\t * Saving and compressing... : {0} Error: {1} Warning: {2} ", saveresult.ToString(), Error, Warning));
                     swApp.CloseDoc(string.Empty);
                     Results.Add(System.Environment.NewLine);
                     swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
@@ -459,7 +460,7 @@ namespace PowerSM
                    System.IO.Directory.Delete(newfilename);
                    // save
                    var saveresult = swModelDoc.Extension.SaveAs(newfilename, (int)swSaveAsVersion_e.swSaveAsCurrentVersion, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref Error, ref Warning);
-                   Results.Add(string.Format("\n\t * Saving... : {0} Error: {1} Warning: {2} \n", saveresult.ToString(), Error, Warning));
+                   Results.Add(string.Format("\n\t * Saving to output directory... : {0} Error: {1} Warning: {2} \n", saveresult.ToString(), Error, Warning));
                    Results.Add(System.Environment.NewLine);
                    swApp.CloseDoc(string.Empty);
                    swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
@@ -468,6 +469,8 @@ namespace PowerSM
                 else
                 {
                     // Save part
+                    Results.Add(string.Format("\n\t * Saving file...\n"));
+                    Results.Add(System.Environment.NewLine);
                     swModelDoc.Save();
                     swApp.CloseDoc(string.Empty);
                     Results.Add(System.Environment.NewLine);
@@ -573,7 +576,7 @@ namespace PowerSM
                     swSheetMetalDataFeature.BendRadius = (radius * 1.0) / 1000.0;
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
                     
-                    Results.Add(string.Format("\t * changing {0}'s radius to {1} mm: {2}.", swFeature.Name, radius.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * changing {0}'s radius to {1} : {2}.", swFeature.Name, radius.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
                 }
@@ -612,7 +615,7 @@ namespace PowerSM
                     swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
                     swSheetMetalDataFeature.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * changing {0}'s kfactor to {1} mm: {2}.", swFeature.Name, KFactor.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * changing {0}'s kfactor to {1} : {2}.", swFeature.Name, KFactor.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
                 }
@@ -670,7 +673,7 @@ namespace PowerSM
                         continue;
                     swSheetMetalDataFeature.Thickness = Thickness / 1000.0;
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * changing {0}'s thickness to {1} mm: {2}.", swFeature.Name, Thickness.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * changing {0}'s thickness to {1} : {2}.", swFeature.Name, Thickness.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
                 }

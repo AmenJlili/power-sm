@@ -79,6 +79,12 @@
       <DependentUpon>PartViewer.cs</DependentUpon>
     </Compile>
     <Compile Include="power-sm.cs" />
+    <Compile Include="PowerConvert.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="PowerConvert.Designer.cs">
+      <DependentUpon>PowerConvert.cs</DependentUpon>
+    </Compile>
     <Compile Include="PowerGeometry_Form.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -105,6 +111,9 @@
     <EmbeddedResource Include="AboutBox.resx">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="PowerConvert.resx">
+      <DependentUpon>PowerConvert.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="PowerGeometry_Form.resx">
       <DependentUpon>PowerGeometry_Form.cs</DependentUpon>
     </EmbeddedResource>
@@ -129,6 +138,17 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\folder_png.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <COMReference Include="FeatureWorks">
+      <Guid>{7CF8CA03-1DCE-11D1-A89B-0020AF351FA9}</Guid>
+      <VersionMajor>1</VersionMajor>
+      <VersionMinor>0</VersionMinor>
+      <Lcid>0</Lcid>
+      <WrapperTool>tlbimp</WrapperTool>
+      <Isolated>False</Isolated>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </COMReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
