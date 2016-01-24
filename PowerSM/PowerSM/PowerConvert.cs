@@ -96,6 +96,37 @@ namespace PowerSM
 
         }
 
+
+        private void BrowseForOutPutFolder_Click(object sender, EventArgs e)
+        {
+            OutputFolder();
+        }
+
+        private void BrowseForFolderButton_Click(object sender, EventArgs e)
+        {
+            InitiateOpenFolder();
+        }
+
+        private void InitiateOpenFolder()
+        {
+            FolderBrowserDialog FolderBrowser = new FolderBrowserDialog();
+            FolderBrowser.ShowDialog();
+
+            if (!string.IsNullOrEmpty(FolderBrowser.SelectedPath))
+            {
+                // List all directories
+                CurrentDirectory = FolderBrowser.SelectedPath;
+                ListDirectory(FilesTreeView, CurrentDirectory);
+
+                //Get all tree nodes from treeview
+                AllTreeViewNodes = new List<CustomTreeNode>();
+                GetAllNodesFromTreeView(FilesTreeView, AllTreeViewNodes);
+
+                // Select all nodes
+                selectAllToolStripMenuItem.PerformClick();
+            }
+        }
+
         private async Task<string[]> ConvertToSheetMetalPartAsync(CustomTreeNode customtreenode)
         {
 
@@ -129,7 +160,9 @@ namespace PowerSM
 
 
                 // convert neutral format to sheet metal
-                var swFeatureWorks = new FeatureWorks.FeatureWorksApp();
+                FeatureWorks.FeatureWorksApp swFeatureWorks;
+                swFeatureWorks = (FeatureWorks.FeatureWorksApp)swApp.GetAddInObject("FeatureWorks.FeatureWorksApp");
+                
                 int Options =
                       (int)FeatureWorks.fwAutomaticRecognitionOptions_e.fwAutoEdgeFlange
                     + (int)FeatureWorks.fwAutomaticRecognitionOptions_e.fwBaseFlange
@@ -138,7 +171,7 @@ namespace PowerSM
                     ;
                 // Select base flange for fixed faces
 
-                PartDoc swPart = new PartDoc();
+                PartDoc swPart;
                 swPart = (PartDoc)swModelDoc;
                 Body2[] swSheetMetalBodies = swPart.GetBodies((int)swBodyType_e.swSheetBody);
                 swModelDoc.ClearSelection2(true);
@@ -233,31 +266,9 @@ namespace PowerSM
             }
         }
 
-        private void BrowseForFolderButton_Click(object sender, EventArgs e)
-        {
-            InitiateOpenFolder();
+        
 
-        }
-
-        private void InitiateOpenFolder()
-        {
-            FolderBrowserDialog FolderBrowser = new FolderBrowserDialog();
-            FolderBrowser.ShowDialog();
-
-            if (!string.IsNullOrEmpty(FolderBrowser.SelectedPath))
-            {
-                // List all directories
-                CurrentDirectory = FolderBrowser.SelectedPath;
-                ListDirectory(FilesTreeView, CurrentDirectory);
-
-                //Get all tree nodes from treeview
-                AllTreeViewNodes = new List<CustomTreeNode>();
-                GetAllNodesFromTreeView(FilesTreeView, AllTreeViewNodes);
-
-                // Select all nodes
-                selectAllToolStripMenuItem.PerformClick();
-            }
-        }
+     
         private void OutputFolder()
         {
             FolderBrowserDialog FolderBrowser = new FolderBrowserDialog();
@@ -306,10 +317,7 @@ namespace PowerSM
             if (!string.IsNullOrEmpty(CurrentDirectory))
                 System.Diagnostics.Process.Start("explorer.exe", CurrentDirectory);
         }
-        private void BrowseForOutPutFolder_Click(object sender, EventArgs e)
-        {
-            OutputFolder();
-        }
+        
         private void optionsToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             var powersmoptions = new PowerGeometryOptions();
@@ -446,6 +454,13 @@ namespace PowerSM
             AboutBox aboutbox = new AboutBox();
             aboutbox.ShowDialog();
         }
+
+        private void FilesTreeGroupBox_Enter(object sender, EventArgs e)
+        {
+
+        }
+
+       
     }
 
     

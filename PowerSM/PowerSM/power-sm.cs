@@ -73,7 +73,7 @@ namespace PowerSM
             int DocType = (int)swDocumentTypes_e.swDocNONE;
             swApp.AddMenu(DocType, "PowerSM", 1);
             swApp.AddMenuItem4(DocType, AddInCookie, "Power Geometry Tool@PowerSM", 1, "GeometryToolMethod", "3", "Power Geometry Tool", "");
-
+            swApp.AddMenuItem4(DocType, AddInCookie, "Power Convert Tool@PowerSM", 1, "ConvertToolMethod", "3", "Power Convert Tool", "");
         }
         private void DestroyMenu()
         {
@@ -81,6 +81,7 @@ namespace PowerSM
             int DocType = (int)swDocumentTypes_e.swDocNONE;
             swApp.RemoveMenu(DocType, "PowerSM", "GeometryToolMethod");
             swApp.RemoveMenu(DocType, "Power Geometry Tool@PowerSM", "GeometryToolMethod");
+            swApp.RemoveMenu(DocType, "Power Convert Tool@PowerSM", "ConvertToolMethod");
 
         }
         #endregion
@@ -90,6 +91,11 @@ namespace PowerSM
         public void GeometryToolMethod()
         {
             var  f = new PowerGeometryForm(swApp);
+            f.ShowDialog();
+        }
+        public void ConvertToolMethod()
+        {
+            var f = new PowerConvert(swApp);
             f.ShowDialog();
         }
         #endregion
