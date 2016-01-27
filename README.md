@@ -1,6 +1,7 @@
 #power-sm Add-in for SolidWorks
 
-<center><img src="http://picpaste.com/pics/Capture-NN48S575.1453417223.JPG"></img></center>
+
+<a href="http://ctrlv.in/703138" target="_blank"><img src="http://img.ctrlv.in/img/16/01/27/56a928a2acde0.jpg" alt="PowerSM 1.1" /><br/>PowerSM 1.1 </a>
 <br><center><b>Screenshot: </b>Pre-release 1.1</center>
 # Version History:
 
