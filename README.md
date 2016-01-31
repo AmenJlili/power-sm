@@ -1,11 +1,13 @@
-#power-sm Add-in for SolidWorks 64 bits
+#power-sm Add-in for SolidWorks
 
-<center><img src="http://s15.postimg.org/hhfktqpor/preview.png"></center>
-<br><center><b>Screenshot: </b>Pre-release 1.0</center>
+
+<a href="http://ctrlv.in/703138" target="_blank"><img src="http://img.ctrlv.in/img/16/01/27/56a928a2acde0.jpg" alt="PowerSM 1.1" /><br/>PowerSM 1.1 </a>
+<br><center><b>Screenshot: </b>Pre-release 1.1</center>
 # Version History:
-- 03/01/2016: 1.0 release
-- 12/31/2015: 1.0a pre-release
-- 12/30/2015: 1.0 pre-release
+
+- 01/20/2016: 1.1  release
+- 01/03/2016: 1.0  release
+
 
 
 
@@ -13,7 +15,7 @@
 
 # About:
 
-Power-SM ,short for Power-Sheet Metal, is C# COM Add-in for SolidWorks 64 bits.
+Power-SM ,short for Power-Sheet Metal, is C# COM Add-in for SolidWorks.
 
 <p align="justify">The main purpose of this add-in to perform tedious operations Sheet Metal CAD files and let mechancial design engineers focus on the design.
 
@@ -21,10 +23,9 @@ Many engineers are faced with cumbersome tasks of modifying hundreds of CAD file
 
 The main functionalities will allow users to:
 
-- Change radius, kfactor and thickness (PowerGeometry Tool)
-- Add custom properties (Future feature)
-- Extract custom properties (Future feature)
-- Generate CSV of custom properties (Future feature)
+- PowerGeometry Tool: Change radius, kfactor and thickness
+- PowerConvert Tool: Convert neutral format files to sheet metal SolidWorks part files
+- PowerNest Tool (future release): Nesting tool for sheet metal parts
 
 
 # Notes to developers
