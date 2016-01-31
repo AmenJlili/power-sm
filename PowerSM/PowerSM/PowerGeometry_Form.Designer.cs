@@ -48,6 +48,7 @@
             this.SaveLog = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.RecentToolStripMenu = new System.Windows.Forms.ToolStripMenuItem();
             this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.selectAllToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -63,6 +64,7 @@
             this.OpenFolder = new System.Windows.Forms.Button();
             this.LogGroupBox = new System.Windows.Forms.GroupBox();
             this.LogTextBox = new System.Windows.Forms.TextBox();
+            this.recentDirectoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.FilesTreeGroupBox.SuspendLayout();
             this.SheetMetalDataGroupBox.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -255,17 +257,26 @@
             // fileToolStripMenuItem
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.quitToolStripMenuItem});
+            this.quitToolStripMenuItem,
+            this.recentDirectoryToolStripMenuItem,
+            this.RecentToolStripMenu});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
             this.fileToolStripMenuItem.Text = "File";
             // 
+            // RecentToolStripMenu
+            // 
+            this.RecentToolStripMenu.Name = "RecentToolStripMenu";
+            this.RecentToolStripMenu.Size = new System.Drawing.Size(170, 22);
+            this.RecentToolStripMenu.Text = "Recent Directory...";
+            this.RecentToolStripMenu.Click += new System.EventHandler(this.RecentToolStripMenu_Click);
+            // 
             // quitToolStripMenuItem
             // 
             this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
             this.quitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(170, 22);
             this.quitToolStripMenuItem.Text = "Quit";
             this.quitToolStripMenuItem.Click += new System.EventHandler(this.quitToolStripMenuItem_Click);
             // 
@@ -417,6 +428,13 @@
             this.LogTextBox.Size = new System.Drawing.Size(471, 80);
             this.LogTextBox.TabIndex = 0;
             // 
+            // recentDirectoryToolStripMenuItem
+            // 
+            this.recentDirectoryToolStripMenuItem.Enabled = false;
+            this.recentDirectoryToolStripMenuItem.Name = "recentDirectoryToolStripMenuItem";
+            this.recentDirectoryToolStripMenuItem.Size = new System.Drawing.Size(170, 22);
+            this.recentDirectoryToolStripMenuItem.Text = "Recent Directory";
+            // 
             // PowerGeometryForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -431,6 +449,7 @@
             this.Name = "PowerGeometryForm";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "Power Geometry Tool";
+            this.Activated += new System.EventHandler(this.PowerGeometryForm_Activated);
             this.Load += new System.EventHandler(this.Power_SM_Form_Load);
             this.FilesTreeGroupBox.ResumeLayout(false);
             this.SheetMetalDataGroupBox.ResumeLayout(false);
@@ -487,5 +506,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Button BrowseForOutPutFolder;
         private System.Windows.Forms.ToolStripMenuItem partViewerToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem RecentToolStripMenu;
+        private System.Windows.Forms.ToolStripMenuItem recentDirectoryToolStripMenuItem;
     }
 }

@@ -32,6 +32,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>psm.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="SolidWorks.Interop.sldworks">
       <HintPath>D:\swdlls\SolidWorks.Interop.sldworks.dll</HintPath>
@@ -149,6 +152,10 @@
       <Isolated>False</Isolated>
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="psm.ico" />
+    <None Include="Resources\add_icon.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

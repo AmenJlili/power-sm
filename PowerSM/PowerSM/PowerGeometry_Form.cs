@@ -30,7 +30,7 @@ namespace PowerSM
         }
 
         private void Power_SM_Form_Load(object sender, EventArgs e)
-        {
+        {   
             // Load icons for tree view 
             var rm = new System.Resources.ResourceManager("PowerSM.Properties.Resources", System.Reflection.Assembly.GetExecutingAssembly());
             Bitmap part = (Bitmap)rm.GetObject("part_png");
@@ -69,6 +69,7 @@ namespace PowerSM
                                                     "SheetMetal",
                                                     "OneBend",
                                                     });
+            
         }
     
 
@@ -99,6 +100,11 @@ namespace PowerSM
 
                 // Select all nodes
                 selectAllToolStripMenuItem.PerformClick();
+
+                // Add curren directory to recent directory menu strip 
+                System.Configuration.ConfigurationSettings.AppSettings["RecentDirectory"] = CurrentDirectory;
+
+                RecentToolStripMenu.Text = CurrentDirectory;
             }
         }
         private void OutputFolder()
@@ -391,11 +397,14 @@ namespace PowerSM
         }
         private string[] ChangeSheetMetalFeatures(CustomTreeNode customtreenode, double radius, double thickness, decimal kfactor)
         {
+            
+
             List<string> Results = new List<string>();
             ModelDoc2 swModelDoc;
 
            try
             {
+                StartButton.Enabled = false;
                 int Error = 0;
                 int Warning = 0;
                 Results.Add(string.Format("[{0}] PART FILENAME: {1}", DateTime.Now.ToString(), customtreenode.FullFilePath)); 
@@ -476,6 +485,7 @@ namespace PowerSM
                     Results.Add(System.Environment.NewLine);
                     swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
                 }
+                StartButton.Enabled = true;
                 return Results.ToArray<string>();
 
             }
@@ -486,6 +496,7 @@ namespace PowerSM
                 Results.Add(System.Environment.NewLine);
                 swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
                 swApp.CloseDoc(string.Empty);
+                StartButton.Enabled = true;
                 return Results.ToArray<string>();
             }
         
@@ -596,23 +607,36 @@ namespace PowerSM
         {
             List<string> Results = new List<string>();
 
-           
-
             try
             {
 
                 FeatureManager swFeatureManager = swModelDoc.FeatureManager;
                 var swFeatures = swFeatureManager.GetFeatures(false);
-                foreach (Feature swFeature in swFeatures)
+                var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
+                if (!(swSheetMetalFolder == null))
+                {
+                    Feature swSheetMetalFolderFeature = swSheetMetalFolder.GetFeature();         
+                    SheetMetalFeatureData swSheetMetalFeatureDataFromFolder = swSheetMetalFolderFeature.GetDefinition();
+                    CustomBendAllowance swCustomBendAllowance = swSheetMetalFeatureDataFromFolder.GetCustomBendAllowance();
+                    swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
+                    swCustomBendAllowance.KFactor = (double)KFactor;
+                    swSheetMetalFeatureDataFromFolder.SetCustomBendAllowance(swCustomBendAllowance);
+                    bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalFeatureDataFromFolder, swModelDoc, null);
+                    Results.Add(string.Format("\t * changing {0}'s kfactor to {1} : {2}.", swSheetMetalFolderFeature.Name, KFactor.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+
+                }
+
+                    // Change kfactor of features from feature manager
+
+                    foreach (Feature swFeature in swFeatures)
                 {
                     dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithKFactorProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
                     if (swSheetMetalDataFeature == null)
                         continue;
-                    // missing overrride for bend tables 
-                    
+                    // missing overrride for bend tables  
                     CustomBendAllowance swCustomBendAllowance = swSheetMetalDataFeature.GetCustomBendAllowance();
-                    swCustomBendAllowance.KFactor = (double)KFactor;
                     swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
+                    swCustomBendAllowance.KFactor = (double)KFactor;
                     swSheetMetalDataFeature.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
                     Results.Add(string.Format("\t * changing {0}'s kfactor to {1} : {2}.", swFeature.Name, KFactor.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
@@ -626,12 +650,12 @@ namespace PowerSM
             }
             catch (Exception exception)
             {
-
+                Results.Add(exception.ToString());
                 return Results.ToArray<string>();
 
             }
         }
-       private string[] ChangeThickness(ModelDoc2 swModelDoc, double Thickness)
+        private string[] ChangeThickness(ModelDoc2 swModelDoc, double Thickness)
         {
            
 
@@ -710,6 +734,30 @@ namespace PowerSM
         private void FilesTreeView_AfterSelect(object sender, TreeViewEventArgs e)
         {
 
+        }
+
+        private void RecentToolStripMenu_Click(object sender, EventArgs e)
+        {
+            var RecentDirectory = RecentToolStripMenu.Text;
+            if (System.IO.Directory.Exists(RecentDirectory))
+            {
+                CurrentDirectory = RecentDirectory;
+                ListDirectory(FilesTreeView, CurrentDirectory);
+
+                //Get all tree nodes from treeview
+                AllTreeViewNodes = new List<CustomTreeNode>();
+                GetAllNodesFromTreeView(FilesTreeView, AllTreeViewNodes);
+
+                // Select all nodes
+                selectAllToolStripMenuItem.PerformClick();
+
+            }
+        }
+
+        private void PowerGeometryForm_Activated(object sender, EventArgs e)
+        {
+            // Load recent directory
+            RecentToolStripMenu.Text = Convert.ToString(System.Configuration.ConfigurationSettings.AppSettings["RecentDirectory"]);
         }
     }
     public class CustomTreeNode : TreeNode

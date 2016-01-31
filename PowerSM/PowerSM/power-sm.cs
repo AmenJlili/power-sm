@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.InteropServices;
 using Microsoft.Win32;
 using SolidWorks.Interop.sldworks;
-using SolidWorks.Interop.swcommands;
 using SolidWorks.Interop.swconst;
 using SolidWorks.Interop.swpublished;
+using System.Reflection;
+using SolidWorksTools.File;
+using System.Drawing;
 
 namespace PowerSM
 {
@@ -55,6 +53,30 @@ namespace PowerSM
             rk.SetValue(null, 1); // 1: Add-in will load at start-up
             rk.SetValue("Title", "Power-SM"); // Title
             rk.SetValue("Description", "SolidWorks Add-in for Sheet Metal"); // Description
+
+#region Bitmap handling region
+            BitmapHandler iBmp = new BitmapHandler();
+
+            Assembly thisAssembly;
+
+            thisAssembly = System.Reflection.Assembly.GetExecutingAssembly();
+
+            var rm = new System.Resources.ResourceManager("PowerSM.Properties.Resources", System.Reflection.Assembly.GetExecutingAssembly());
+            Bitmap add_in = (Bitmap)rm.GetObject("add_icon");
+           
+            // Copy the bitmap to a suitable permanent location with a meaningful filename 
+
+            String addInPath = System.IO.Path.GetDirectoryName(thisAssembly.Location);
+            String iconPath = System.IO.Path.Combine(addInPath, "add_icon.bmp");
+            add_in.Save(iconPath);
+         
+
+
+            #endregion
+            // Register the icon location 
+            rk.SetValue("Icon Path", iconPath);
+
+            
         }
 
         [ComUnregisterFunction()]

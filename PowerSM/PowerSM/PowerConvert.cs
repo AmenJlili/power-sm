@@ -146,8 +146,8 @@ namespace PowerSM
                 Results.Add(string.Format("[{0}] PART FILENAME: {1}", DateTime.Now.ToString(), customtreenode.FullFilePath));
 
                 swApp.DocumentVisible(false, (int)swDocumentTypes_e.swDocPART);
-                swModelDoc = swApp.OpenDoc6(customtreenode.FullFilePath, (int)swDocumentTypes_e.swDocPART, (int)swOpenDocOptions_e.swOpenDocOptions_Silent, string.Empty, ref Error, ref Warning);
-
+                bool Result = swApp.LoadFile(customtreenode.FullFilePath);
+                swModelDoc = swApp.ActiveDoc;
                 // All errors and warnings would throw a an error
                 if (Warning != 0)
                 {
@@ -172,13 +172,15 @@ namespace PowerSM
                 // Select base flange for fixed faces
 
                 PartDoc swPart;
-                swPart = (PartDoc)swModelDoc;
-                Body2[] swSheetMetalBodies = swPart.GetBodies((int)swBodyType_e.swSheetBody);
+                swPart = (PartDoc)swApp.ActiveDoc;
+                var swSheetMetalBodiesObj = (object[])swPart.GetBodies2((int)swBodyType_e.swSolidBody, true);
                 swModelDoc.ClearSelection2(true);
                 SelectionMgr swSelectionManager = swModelDoc.SelectionManager;
-                foreach (Body2 swBody in swSheetMetalBodies)
+                foreach (object swBodyObj in swSheetMetalBodiesObj)
                 {
-                    Face2[] swFaces = swBody.GetFaces();
+                    Body2 swBody = (Body2)swBodyObj;
+                    var swFacesObj = (object[])swBody.GetFaces();
+                    var swFaces = (Face2[])swFacesObj;
                     Face2 swLargestFace = swFaces.ToList<Face2>().OrderByDescending<Face2, double>(x => x.GetArea()).First<Face2>();
 
                     swSelectionManager.AddSelectionListObject(swLargestFace, null);
@@ -226,7 +228,7 @@ namespace PowerSM
             }
             catch (Exception exception)
             {
-                var ErrorString = string.Format("[{0}] - ERROR: {1}", DateTime.Now.ToString(), exception.Message);
+                var ErrorString = string.Format("[{0}] - ERROR: {1}", DateTime.Now.ToString(), exception.ToString());
                 Results.Add(ErrorString);
                 Results.Add(System.Environment.NewLine);
                 swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
