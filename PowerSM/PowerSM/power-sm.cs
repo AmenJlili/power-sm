@@ -95,7 +95,7 @@ namespace PowerSM
             int DocType = (int)swDocumentTypes_e.swDocNONE;
             swApp.AddMenu(DocType, "PowerSM", 1);
             swApp.AddMenuItem4(DocType, AddInCookie, "Power Geometry Tool@PowerSM", 1, "GeometryToolMethod", "3", "Power Geometry Tool", "");
-            swApp.AddMenuItem4(DocType, AddInCookie, "Power Convert Tool@PowerSM", 1, "ConvertToolMethod", "3", "Power Convert Tool", "");
+           swApp.AddMenuItem4(DocType, AddInCookie, "Power Convert Tool@PowerSM", 1, "ConvertToolMethod", "3", "Power Convert Tool", "");
         }
         private void DestroyMenu()
         {

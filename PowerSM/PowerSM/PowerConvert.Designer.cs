@@ -106,7 +106,7 @@
             // 
             this.quitToolStripMenuItem.Name = "quitToolStripMenuItem";
             this.quitToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
-            this.quitToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.quitToolStripMenuItem.Size = new System.Drawing.Size(139, 22);
             this.quitToolStripMenuItem.Text = "Quit";
             // 
             // editToolStripMenuItem
@@ -124,6 +124,7 @@
             this.selectAllToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.A)));
             this.selectAllToolStripMenuItem.Size = new System.Drawing.Size(211, 22);
             this.selectAllToolStripMenuItem.Text = "Select All ";
+            this.selectAllToolStripMenuItem.Click += new System.EventHandler(this.selectAllToolStripMenuItem_Click);
             // 
             // unSelectAllToolStripMenuItem
             // 
@@ -132,6 +133,7 @@
             | System.Windows.Forms.Keys.A)));
             this.unSelectAllToolStripMenuItem.Size = new System.Drawing.Size(211, 22);
             this.unSelectAllToolStripMenuItem.Text = "UnSelect All";
+            this.unSelectAllToolStripMenuItem.Click += new System.EventHandler(this.unSelectAllToolStripMenuItem_Click);
             // 
             // optionsToolStripMenuItem
             // 
@@ -175,7 +177,7 @@
             // 
             // BrowseForOutPutFolder
             // 
-            this.BrowseForOutPutFolder.Location = new System.Drawing.Point(399, 269);
+            this.BrowseForOutPutFolder.Location = new System.Drawing.Point(302, 269);
             this.BrowseForOutPutFolder.Name = "BrowseForOutPutFolder";
             this.BrowseForOutPutFolder.Size = new System.Drawing.Size(94, 38);
             this.BrowseForOutPutFolder.TabIndex = 18;
@@ -240,7 +242,7 @@
             // 
             // BrowseForFolderButton
             // 
-            this.BrowseForFolderButton.Location = new System.Drawing.Point(299, 269);
+            this.BrowseForFolderButton.Location = new System.Drawing.Point(402, 269);
             this.BrowseForFolderButton.Name = "BrowseForFolderButton";
             this.BrowseForFolderButton.Size = new System.Drawing.Size(94, 38);
             this.BrowseForFolderButton.TabIndex = 10;

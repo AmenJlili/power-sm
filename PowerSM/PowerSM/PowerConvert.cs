@@ -15,6 +15,7 @@ namespace PowerSM
 {
     public partial class PowerConvert : Form
     {
+        FeatureWorks.FeatureWorksApp swFeatureWorks;
         string CurrentDirectory;
         string OutputDirectory;
         SldWorks swApp;
@@ -59,6 +60,45 @@ namespace PowerSM
             // if ArchiveZipFormat is true, prepare temp directory etc..
             if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]))
                 PrepareZip();
+
+
+            // load featureworks 
+            string strExecutablePath = swApp.GetExecutablePath();
+            string strDllFileName = strExecutablePath + @"\fworks\fworks.dll";
+            long lStatus = swApp.LoadAddIn(strDllFileName);
+            if (lStatus != 0)
+            {
+                switch (lStatus)
+
+                {
+                    case -1:
+                        MessageBox.Show(strDllFileName + " not loaded; unknown error.");
+                        return;
+                    case 1:
+                        MessageBox.Show(strDllFileName + "not loaded; not an error.");
+                        return;
+                    case 2:
+                        MessageBox.Show(strDllFileName + "not loaded; already loaded." +
+                        "Unload the add -in in SOLIDWORKS and then rerun the add-in.");
+                        return;
+                    default:
+                        break;
+                }
+
+                return;
+            }
+            else {
+
+                // startfeatureworks 
+              
+                swFeatureWorks = (FeatureWorks.FeatureWorksApp)swApp.GetAddInObject("FeatureWorks.FeatureWorksApp");
+                if (swFeatureWorks == null)
+                {
+                    MessageBox.Show("Unable to start feature recognition.");
+                    return;
+                }
+            }
+
             // sleeves roll-up:
 
 
@@ -107,6 +147,8 @@ namespace PowerSM
             InitiateOpenFolder();
         }
 
+
+        
         private void InitiateOpenFolder()
         {
             FolderBrowserDialog FolderBrowser = new FolderBrowserDialog();
@@ -149,26 +191,11 @@ namespace PowerSM
                 bool Result = swApp.LoadFile(customtreenode.FullFilePath);
                 swModelDoc = swApp.ActiveDoc;
                 // All errors and warnings would throw a an error
-                if (Warning != 0)
-                {
-                    throw new OpenFileException(Warning, true);
-                }
-                else if (Error != 0)
-                {
-                    throw new OpenFileException(Error, false);
-                }
+              
 
 
-                // convert neutral format to sheet metal
-                FeatureWorks.FeatureWorksApp swFeatureWorks;
-                swFeatureWorks = (FeatureWorks.FeatureWorksApp)swApp.GetAddInObject("FeatureWorks.FeatureWorksApp");
+               
                 
-                int Options =
-                      (int)FeatureWorks.fwAutomaticRecognitionOptions_e.fwAutoEdgeFlange
-                    + (int)FeatureWorks.fwAutomaticRecognitionOptions_e.fwBaseFlange
-                    + (int)FeatureWorks.fwAutomaticRecognitionOptions_e.fwSketchedBend
-                    + (int)FeatureWorks.fwAutomaticRecognitionOptions_e.fwAutoHemFlange;
-                    ;
                 // Select base flange for fixed faces
 
                 PartDoc swPart;
@@ -179,24 +206,40 @@ namespace PowerSM
                 foreach (object swBodyObj in swSheetMetalBodiesObj)
                 {
                     Body2 swBody = (Body2)swBodyObj;
-                    var swFacesObj = (object[])swBody.GetFaces();
-                    var swFaces = (Face2[])swFacesObj;
-                    Face2 swLargestFace = swFaces.ToList<Face2>().OrderByDescending<Face2, double>(x => x.GetArea()).First<Face2>();
+                    dynamic[] swFacesObj = (object[])swBody.GetFaces();
+                    List<Face2> swFaces = new List<Face2>();
+                    foreach (object swFaceObj in swFacesObj)
+                    {
+                        Face2 swFace = (Face2)swFaceObj;
+                        swFaces.Add(swFace);
+                    };
+
+                    Face2 swLargestFace = swFaces.OrderByDescending<Face2, double>(x => x.GetArea()).First<Face2>();
 
                     swSelectionManager.AddSelectionListObject(swLargestFace, null);
                 }
+                // start featureworks
+                int Options =
+                      (int)FeatureWorks.fwAutomaticRecognitionOptions_e.fwAutoEdgeFlange
+                    + (int)FeatureWorks.fwAutomaticRecognitionOptions_e.fwBaseFlange
+                    + (int)FeatureWorks.fwAutomaticRecognitionOptions_e.fwSketchedBend
+                    + (int)FeatureWorks.fwAutomaticRecognitionOptions_e.fwAutoHemFlange
+                    + (int)FeatureWorks.fwAutomaticRecognitionOptions_e.fwVolume;
+                
+                
                 // Recongize feature
                 swFeatureWorks.RecognizeFeatureAutomatic(Options);
-                swFeatureWorks.CreateFeatures((int)FeatureWorks.fwFeatureCreationOptions_e.fwAllowFailFeatureCreation);
-                Results.Add(string.Format("\n\t * recognizing features.. : {0}"));
-
+                bool result = swFeatureWorks.CreateFeatures((int)FeatureWorks.fwFeatureCreationOptions_e.fwAllowFailFeatureCreation);
+                Results.Add(string.Format("\n\t * recognizing features: {0}", result.ToString()));
                 // save
-                // todo: remove extension from filename and replace it with sldworks extension 
+
 
                 if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]) && !String.IsNullOrEmpty(OutputDirectory))
                 {
                     string TempFolder = @"C:\Temp\PowerSM";
                     string newfilename = string.Format(@"{0}\{1}", TempFolder, customtreenode.FullPath);
+                    // change extension
+                    newfilename = System.IO.Path.ChangeExtension(newfilename, "sldprt");
                     // create full directory for new file
                     System.IO.Directory.CreateDirectory(newfilename);
                     System.IO.Directory.Delete(newfilename);
@@ -211,6 +254,8 @@ namespace PowerSM
                 else if (!String.IsNullOrEmpty(OutputDirectory))
                 {
                     string newfilename = string.Format(@"{0}\{1}", OutputDirectory, customtreenode.FullPath);
+                    // change extension
+                    newfilename = System.IO.Path.ChangeExtension(newfilename, "sldprt");
                     // create full directory for new file
                     System.IO.Directory.CreateDirectory(newfilename);
                     System.IO.Directory.Delete(newfilename);
@@ -390,26 +435,8 @@ namespace PowerSM
             aboutbox.ShowDialog();
         }
 
-        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (AllTreeViewNodes != null)
-            {
-                foreach (TreeNode treenode in AllTreeViewNodes)
-                {
-                    treenode.Checked = true;
-                }
-            }
-        }
-        private void unSelectAllToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (AllTreeViewNodes != null)
-            {
-                foreach (TreeNode treenode in AllTreeViewNodes)
-                {
-                    treenode.Checked = false;
-                }
-            }
-        }
+      
+        
 
 
         #region GetAllNodes methods
@@ -462,7 +489,28 @@ namespace PowerSM
 
         }
 
-       
+        private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (AllTreeViewNodes != null)
+            {
+                foreach (TreeNode treenode in AllTreeViewNodes)
+                {
+                    treenode.Checked = true;
+                }
+            }
+        }
+        private void unSelectAllToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (AllTreeViewNodes != null)
+            {
+                foreach (TreeNode treenode in AllTreeViewNodes)
+                {
+                    treenode.Checked = false;
+                }
+            }
+        }
+
+     
     }
 
     
