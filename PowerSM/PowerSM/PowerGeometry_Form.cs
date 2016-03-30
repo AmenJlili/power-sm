@@ -532,7 +532,7 @@ namespace PowerSM
                         if (UnitSystemCombBox.Text == "IPS")
                             break;
                         else
-                            radius = radius / 0.0393701;
+                            radius = radius * 25.4;
                         break;
                     default:
                         break;
@@ -682,7 +682,7 @@ namespace PowerSM
                         if (UnitSystemCombBox.Text == "IPS")
                             break;
                         else
-                            Thickness = Thickness / 0.0393701;
+                            Thickness = Thickness * 25.4;
                         break;
                     default:
                         break;

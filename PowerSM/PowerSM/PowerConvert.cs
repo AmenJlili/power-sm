@@ -361,8 +361,8 @@ namespace PowerSM
 
         private void OpenFolder_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(CurrentDirectory))
-                System.Diagnostics.Process.Start("explorer.exe", CurrentDirectory);
+            if (!string.IsNullOrEmpty(OutputDirectory))
+                System.Diagnostics.Process.Start("explorer.exe", OutputDirectory);
         }
         
         private void optionsToolStripMenuItem1_Click(object sender, EventArgs e)
