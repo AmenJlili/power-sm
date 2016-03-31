@@ -75,19 +75,7 @@
       <DependentUpon>AboutBox.cs</DependentUpon>
     </Compile>
     <Compile Include="ErrorEchoer.cs" />
-    <Compile Include="PartViewer.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="PartViewer.Designer.cs">
-      <DependentUpon>PartViewer.cs</DependentUpon>
-    </Compile>
     <Compile Include="power-sm.cs" />
-    <Compile Include="PowerConvert.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="PowerConvert.Designer.cs">
-      <DependentUpon>PowerConvert.cs</DependentUpon>
-    </Compile>
     <Compile Include="PowerGeometry_Form.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -113,9 +101,6 @@
   <ItemGroup>
     <EmbeddedResource Include="AboutBox.resx">
       <DependentUpon>AboutBox.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="PowerConvert.resx">
-      <DependentUpon>PowerConvert.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="PowerGeometry_Form.resx">
       <DependentUpon>PowerGeometry_Form.cs</DependentUpon>

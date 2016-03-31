@@ -117,8 +117,7 @@ namespace PowerSM
         }
         public void ConvertToolMethod()
         {
-            var f = new PowerConvert(swApp);
-            f.ShowDialog();
+           
         }
         #endregion
 

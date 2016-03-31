@@ -34,13 +34,14 @@
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.SaveOptionsButton = new System.Windows.Forms.Button();
             this.helpProvider1 = new System.Windows.Forms.HelpProvider();
+            this.ForceMode = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // ForceDimensionalRespectCheckBox
             // 
             this.ForceDimensionalRespectCheckBox.AutoSize = true;
-            this.ForceDimensionalRespectCheckBox.Location = new System.Drawing.Point(17, 30);
+            this.ForceDimensionalRespectCheckBox.Location = new System.Drawing.Point(17, 42);
             this.ForceDimensionalRespectCheckBox.Name = "ForceDimensionalRespectCheckBox";
             this.ForceDimensionalRespectCheckBox.Size = new System.Drawing.Size(430, 17);
             this.ForceDimensionalRespectCheckBox.TabIndex = 0;
@@ -51,7 +52,7 @@
             // ArchiveInZipFormatCheckBox
             // 
             this.ArchiveInZipFormatCheckBox.AutoSize = true;
-            this.ArchiveInZipFormatCheckBox.Location = new System.Drawing.Point(17, 53);
+            this.ArchiveInZipFormatCheckBox.Location = new System.Drawing.Point(17, 65);
             this.ArchiveInZipFormatCheckBox.Name = "ArchiveInZipFormatCheckBox";
             this.ArchiveInZipFormatCheckBox.Size = new System.Drawing.Size(142, 17);
             this.ArchiveInZipFormatCheckBox.TabIndex = 1;
@@ -60,18 +61,19 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.ForceMode);
             this.groupBox1.Controls.Add(this.ForceDimensionalRespectCheckBox);
             this.groupBox1.Controls.Add(this.ArchiveInZipFormatCheckBox);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(488, 90);
+            this.groupBox1.Size = new System.Drawing.Size(488, 102);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Options";
             // 
             // SaveOptionsButton
             // 
-            this.SaveOptionsButton.Location = new System.Drawing.Point(431, 108);
+            this.SaveOptionsButton.Location = new System.Drawing.Point(431, 120);
             this.SaveOptionsButton.Name = "SaveOptionsButton";
             this.SaveOptionsButton.Size = new System.Drawing.Size(69, 27);
             this.SaveOptionsButton.TabIndex = 3;
@@ -79,11 +81,21 @@
             this.SaveOptionsButton.UseVisualStyleBackColor = true;
             this.SaveOptionsButton.Click += new System.EventHandler(this.SaveOptionsButton_Click);
             // 
+            // ForceMode
+            // 
+            this.ForceMode.AutoSize = true;
+            this.ForceMode.Location = new System.Drawing.Point(17, 19);
+            this.ForceMode.Name = "ForceMode";
+            this.ForceMode.Size = new System.Drawing.Size(83, 17);
+            this.ForceMode.TabIndex = 2;
+            this.ForceMode.Text = "Force Mode";
+            this.ForceMode.UseVisualStyleBackColor = true;
+            // 
             // PowerGeometryOptions
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(512, 143);
+            this.ClientSize = new System.Drawing.Size(512, 162);
             this.Controls.Add(this.SaveOptionsButton);
             this.Controls.Add(this.groupBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -108,5 +120,6 @@
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button SaveOptionsButton;
         private System.Windows.Forms.HelpProvider helpProvider1;
+        private System.Windows.Forms.CheckBox ForceMode;
     }
 }

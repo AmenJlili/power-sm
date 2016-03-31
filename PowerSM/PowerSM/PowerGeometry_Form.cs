@@ -287,8 +287,8 @@ namespace PowerSM
                 return;
             }
 
-            decimal kfactor;
-            if (!decimal.TryParse(String.IsNullOrWhiteSpace(KFactorTextBox.Text) ? "0" : KFactorTextBox.Text, out kfactor))
+            double BendZoneValue;
+            if (!double.TryParse(String.IsNullOrWhiteSpace(BendZoneTextBox.Text) ? "0" : BendZoneTextBox.Text, out BendZoneValue))
             {
                 ErrorEchoer.Err((int)PowerSMEnums.Errors.cannot_parse_kfacor);
                 return;
@@ -323,11 +323,11 @@ namespace PowerSM
             PrepareZip();
             // sleeves roll-up:
 
-
+            Boolean force = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["Force"]);
             foreach (CustomTreeNode element in SelectedTreeNodes)
             {
 
-                Task<string[]> ChangeSheetMetalFeaturesAsyncTask = ChangeSheetMetalFeaturesAsync(element, Radius,thickness,kfactor);
+                Task<string[]> ChangeSheetMetalFeaturesAsyncTask = ChangeSheetMetalFeaturesAsync(element, Radius,thickness,BendZoneValue,force);
                 string[] result = await ChangeSheetMetalFeaturesAsyncTask;
                 _ProgressBar.PerformStep();
                 toolStripStatusLabel.Text = ((_ProgressBar.Value * 1.0) / (_ProgressBar.Maximum * 1.0)).ToString("P", System.Globalization.CultureInfo.InvariantCulture);
@@ -358,10 +358,10 @@ namespace PowerSM
 
         }
         
-        private async Task<string[]> ChangeSheetMetalFeaturesAsync(CustomTreeNode customtreenode, double radius,double thickness,decimal kfactor)
+        private async Task<string[]> ChangeSheetMetalFeaturesAsync(CustomTreeNode customtreenode, double radius,double thickness, double BendZoneValue, Boolean force)
         {
 
-            return await Task.Run(() => ChangeSheetMetalFeatures(customtreenode, radius,thickness, kfactor));
+            return await Task.Run(() => ChangeSheetMetalFeatures(customtreenode, radius,thickness, BendZoneValue, force));
 
         }
 
@@ -395,7 +395,7 @@ namespace PowerSM
             {
             }
         }
-        private string[] ChangeSheetMetalFeatures(CustomTreeNode customtreenode, double radius, double thickness, decimal kfactor)
+        private string[] ChangeSheetMetalFeatures(CustomTreeNode customtreenode, double radius, double thickness, double BendZoneValue, Boolean force)
         {
             
 
@@ -422,17 +422,17 @@ namespace PowerSM
                     throw new OpenFileException(Error, false);
                 }
 
-            
+              if (force) { 
                 // change thickness
                 if (thickness > 0)
                 {
-                    Results.AddRange(ChangeThickness(swModelDoc, thickness));
+                    Results.AddRange(ForceChangeThickness(swModelDoc, thickness));
 
                 }
                 // change k-factor
-                if (kfactor > 0)
+                if (BendZoneValue > 0)
                 {
-                    Results.AddRange(ChangeKFactor(swModelDoc, kfactor));
+                    Results.AddRange(ForceChangeBendZone(swModelDoc, BendZoneValue));
 
                 }
 
@@ -441,12 +441,40 @@ namespace PowerSM
                 if (radius > 0)
                 {
 
-                    Results.AddRange(ChangeRadius(swModelDoc, radius));
+                    Results.AddRange(ForceChangeRadius(swModelDoc, radius));
+                }
+
+                   
+                }
+                 // force is false. It will change the sheet metal features and will the changes propegate through the sub-features
+                
+              else
+                {
+                    // change thickness
+                    if (thickness > 0)
+                    {
+                        Results.AddRange(ChangeThickness(swModelDoc, thickness));
+
+                    }
+                    // change k-factor
+                    if (BendZoneValue > 0)
+                    {
+                        Results.AddRange(ChangeBendZone(swModelDoc, BendZoneValue));
+
+                    }
+
+                    // change radius
+
+                    if (radius > 0)
+                    {
+
+                        Results.AddRange(ChangeRadius(swModelDoc, radius));
+                    }
+
                 }
 
                 // save 
-
-               if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]) && !String.IsNullOrEmpty(OutputDirectory))
+                if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]) && !String.IsNullOrEmpty(OutputDirectory))
                 {
                     string TempFolder = @"C:\Temp\PowerSM";
                     string newfilename = string.Format(@"{0}\{1}", TempFolder, customtreenode.FullPath);
@@ -504,7 +532,7 @@ namespace PowerSM
             
         }
 
-        private string[] ChangeRadius(ModelDoc2 swModelDoc, double radius)
+        private string[] ForceChangeRadius(ModelDoc2 swModelDoc, double radius)
         {
 
             double swSheetMetalThickness = 0;
@@ -603,7 +631,7 @@ namespace PowerSM
 
             }
         }
-        private string[] ChangeKFactor(ModelDoc2 swModelDoc, decimal KFactor)
+        private string[] ForceChangeBendZone(ModelDoc2 swModelDoc, double BendZoneValue)
         {
             List<string> Results = new List<string>();
 
@@ -618,11 +646,40 @@ namespace PowerSM
                     Feature swSheetMetalFolderFeature = swSheetMetalFolder.GetFeature();         
                     SheetMetalFeatureData swSheetMetalFeatureDataFromFolder = swSheetMetalFolderFeature.GetDefinition();
                     CustomBendAllowance swCustomBendAllowance = swSheetMetalFeatureDataFromFolder.GetCustomBendAllowance();
-                    swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
-                    swCustomBendAllowance.KFactor = (double)KFactor;
+
+                    switch (BendZoneCheckedBox.Text)
+                    {
+                      
+                        default:
+                            break;
+                        case "KFactor": 
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
+                                swCustomBendAllowance.KFactor = (double)BendZoneValue;
+                                break;
+                            }
+                        case "Bend Allowance":
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
+                                swCustomBendAllowance.BendAllowance = (double)BendZoneValue;
+                                break;
+
+                            }
+
+                        case "Bend Deduction":
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
+                                swCustomBendAllowance.BendDeduction = (double)BendZoneValue;
+                                break;
+                            }
+
+                     
+                         
+                    }
+                    
                     swSheetMetalFeatureDataFromFolder.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalFeatureDataFromFolder, swModelDoc, null);
-                    Results.Add(string.Format("\t * changing {0}'s kfactor to {1} : {2}.", swSheetMetalFolderFeature.Name, KFactor.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * changing {0}'s bend zone value to {1} : {2}.", swSheetMetalFolderFeature.Name, BendZoneValue.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
 
                 }
 
@@ -635,11 +692,38 @@ namespace PowerSM
                         continue;
                     // missing overrride for bend tables  
                     CustomBendAllowance swCustomBendAllowance = swSheetMetalDataFeature.GetCustomBendAllowance();
-                    swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
-                    swCustomBendAllowance.KFactor = (double)KFactor;
+                    switch (BendZoneCheckedBox.Text)
+                    {
+
+                        default:
+                            break;
+                        case "KFactor":
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
+                                swCustomBendAllowance.KFactor = (double)BendZoneValue;
+                                break;
+                            }
+                        case "Bend Allowance":
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
+                                swCustomBendAllowance.BendAllowance = (double)BendZoneValue;
+                                break;
+
+                            }
+
+                        case "Bend Deduction":
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
+                                swCustomBendAllowance.BendDeduction = (double)BendZoneValue;
+                                break;
+                            }
+
+
+
+                    }
                     swSheetMetalDataFeature.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * changing {0}'s kfactor to {1} : {2}.", swFeature.Name, KFactor.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * changing {0}'s bend zone to {1} : {2}.", swFeature.Name, BendZoneValue.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
                 }
@@ -655,7 +739,7 @@ namespace PowerSM
 
             }
         }
-        private string[] ChangeThickness(ModelDoc2 swModelDoc, double Thickness)
+        private string[] ForceChangeThickness(ModelDoc2 swModelDoc, double Thickness)
         {
            
 
@@ -714,17 +798,244 @@ namespace PowerSM
             }
         }
 
+        private string[] ChangeRadius(ModelDoc2 swModelDoc, double radius)
+        {
 
+            double swSheetMetalThickness = 0;
+
+            List<string> Results = new List<string>();
+
+
+            try
+            {
+
+
+                // Check unit system and convert radius to corresponding value
+                int LengthUnit = swModelDoc.LengthUnit;
+                switch (LengthUnit)
+                {
+                    case (int)swLengthUnit_e.swMIL:
+                        {
+                            if (UnitSystemCombBox.Text == "MMGS")
+                                break;
+                            else
+                                radius = 0.0393701 * radius;
+                            break;
+                        }
+                    case (int)swLengthUnit_e.swINCHES:
+                        if (UnitSystemCombBox.Text == "IPS")
+                            break;
+                        else
+                            radius = radius * 25.4;
+                        break;
+                    default:
+                        break;
+                }
+
+                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
+                var swFeatures = swFeatureManager.GetFeatures(false);
+                foreach (Feature swFeature in swFeatures)
+                {
+                    dynamic swSheetMetalDataFeature = ("SheetMetalFeature" == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
+                    if (swSheetMetalDataFeature == null)
+                        continue;
+
+                    if (swSheetMetalDataFeature is SheetMetalFeatureData)
+                    {
+                        swSheetMetalDataFeature.SetOverrideDefaultParameter(false);
+                        swSheetMetalThickness = swSheetMetalDataFeature.Thickness;
+                    }
+
+                    swSheetMetalDataFeature.BendRadius = (radius * 1.0) / 1000.0;
+                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
+
+                    Results.Add(string.Format("\t *NORMAL MODE: changing {0}'s radius to {1} : {2}.", swFeature.Name, radius.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+
+
+                }
+
+
+                return Results.ToArray<string>();
+
+            }
+            catch (Exception exception)
+            {
+
+                return Results.ToArray<string>();
+
+            }
+        }
+        private string[] ChangeBendZone(ModelDoc2 swModelDoc, double BendZoneValue)
+        {
+            List<string> Results = new List<string>();
+
+            try
+            {
+
+                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
+                var swFeatures = swFeatureManager.GetFeatures(false);
+                var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
+                if (!(swSheetMetalFolder == null))
+                {
+                    Feature swSheetMetalFolderFeature = swSheetMetalFolder.GetFeature();
+                    SheetMetalFeatureData swSheetMetalFeatureDataFromFolder = swSheetMetalFolderFeature.GetDefinition();
+                    CustomBendAllowance swCustomBendAllowance = swSheetMetalFeatureDataFromFolder.GetCustomBendAllowance();
+
+                    switch (BendZoneCheckedBox.Text)
+                    {
+
+                        default:
+                            break;
+                        case "KFactor":
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
+                                swCustomBendAllowance.KFactor = (double)BendZoneValue;
+                                break;
+                            }
+                        case "Bend Allowance":
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
+                                swCustomBendAllowance.BendAllowance = (double)BendZoneValue;
+                                break;
+
+                            }
+
+                        case "Bend Deduction":
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
+                                swCustomBendAllowance.BendDeduction = (double)BendZoneValue;
+                                break;
+                            }
+
+
+
+                    }
+                    swSheetMetalFeatureDataFromFolder.SetCustomBendAllowance(swCustomBendAllowance);
+                    bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalFeatureDataFromFolder, swModelDoc, null);
+                    Results.Add(string.Format("\t *: changing {0}'s bend zone to {1} : {2}.", swSheetMetalFolderFeature.Name, BendZoneValue.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+
+                }
+
+                // Change kfactor of features from feature manager
+
+                foreach (Feature swFeature in swFeatures)
+                {
+                    dynamic swSheetMetalDataFeature = ( "SheetMetalFeature" == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
+                    if (swSheetMetalDataFeature == null)
+                        continue;
+                    // missing overrride for bend tables  
+                    CustomBendAllowance swCustomBendAllowance = swSheetMetalDataFeature.GetCustomBendAllowance();
+
+                    switch (BendZoneCheckedBox.Text)
+                    {
+
+                        default:
+                            break;
+                        case "KFactor":
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
+                                swCustomBendAllowance.KFactor = (double)BendZoneValue;
+                                break;
+                            }
+                        case "Bend Allowance":
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
+                                swCustomBendAllowance.BendAllowance = (double)BendZoneValue;
+                                break;
+
+                            }
+
+                        case "Bend Deduction":
+                            {
+                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
+                                swCustomBendAllowance.BendDeduction = (double)BendZoneValue;
+                                break;
+                            }
+
+
+
+                    }
+                    swSheetMetalDataFeature.SetCustomBendAllowance(swCustomBendAllowance);
+                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
+                    Results.Add(string.Format("\t * changing {0}'s bend zone to {1} : {2}.", swFeature.Name, BendZoneValue.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+
+
+                }
+
+
+                return Results.ToArray<string>();
+
+            }
+            catch (Exception exception)
+            {
+                Results.Add(exception.ToString());
+                return Results.ToArray<string>();
+
+            }
+        }
+        private string[] ChangeThickness(ModelDoc2 swModelDoc, double Thickness)
+        {
+
+
+            List<string> Results = new List<string>();
+
+
+            try
+            {
+
+
+                // Check unit system and convert radius to corresponding value
+                int LengthUnit = swModelDoc.LengthUnit;
+                switch (LengthUnit)
+                {
+                    case (int)swLengthUnit_e.swMIL:
+                        {
+                            if (UnitSystemCombBox.Text == "MMGS")
+                                break;
+                            else
+                                Thickness = 0.0393701 * Thickness;
+                            break;
+                        }
+                    case (int)swLengthUnit_e.swINCHES:
+                        if (UnitSystemCombBox.Text == "IPS")
+                            break;
+                        else
+                            Thickness = Thickness * 25.4;
+                        break;
+                    default:
+                        break;
+                }
+                // missing overrride for bend tables 
+                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
+                var swFeatures = swFeatureManager.GetFeatures(false);
+                foreach (Feature swFeature in swFeatures)
+                {
+                    dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithThicknessProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
+                    if (swSheetMetalDataFeature == null)
+                        continue;
+                    swSheetMetalDataFeature.Thickness = Thickness / 1000.0;
+                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
+                    Results.Add(string.Format("\t * NORMAL MODE: changing {0}'s thickness to {1} : {2}.", swFeature.Name, Thickness.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+
+
+                }
+
+
+                return Results.ToArray<string>();
+
+            }
+            catch (Exception exception)
+            {
+
+                return Results.ToArray<string>();
+
+            }
+        }
 
 
 
         #endregion
-
-        private void partViewerToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            var partviewform = new PartViewer();
-            partviewform.Show();
-        }
+ 
 
         private void helpToolStripMenuItem1_Click(object sender, EventArgs e)
         {

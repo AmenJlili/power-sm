@@ -21,12 +21,15 @@ namespace PowerSM
         {
            ForceDimensionalRespectCheckBox.Checked = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ForceDimensionalRespect"]);
            ArchiveInZipFormatCheckBox.Checked = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]);
+           ForceMode.Checked = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["Force"]);
+
         }
 
         private void SaveOptionsButton_Click(object sender, EventArgs e)
         {
             System.Configuration.ConfigurationSettings.AppSettings["ForceDimensionalRespect"] = ForceDimensionalRespectCheckBox.Checked.ToString();
             System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"] = ArchiveInZipFormatCheckBox.Checked.ToString();
+            System.Configuration.ConfigurationSettings.AppSettings["Force"] = ForceMode.Checked.ToString();
             this.Close();
         }
     }
