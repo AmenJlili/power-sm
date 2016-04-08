@@ -422,6 +422,7 @@ namespace PowerSM
                     throw new OpenFileException(Error, false);
                 }
 
+
               if (force) { 
                 // change thickness
                 if (thickness > 0)
@@ -453,12 +454,14 @@ namespace PowerSM
                     // change thickness
                     if (thickness > 0)
                     {
+                        
                         Results.AddRange(ChangeThickness(swModelDoc, thickness));
 
                     }
                     // change k-factor
                     if (BendZoneValue > 0)
                     {
+                      
                         Results.AddRange(ChangeBendZone(swModelDoc, BendZoneValue));
 
                     }
@@ -512,6 +515,7 @@ namespace PowerSM
                     swApp.CloseDoc(string.Empty);
                     Results.Add(System.Environment.NewLine);
                     swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
+                    
                 }
                 StartButton.Enabled = true;
                 return Results.ToArray<string>();
@@ -532,6 +536,10 @@ namespace PowerSM
             
         }
 
+
+        // NEED REWORK
+        // Force  mode: all changes must be done on the features and all default values must be overridden  
+
         private string[] ForceChangeRadius(ModelDoc2 swModelDoc, double radius)
         {
 
@@ -551,16 +559,19 @@ namespace PowerSM
                     case (int)swLengthUnit_e.swMIL:
                         {
                             if (UnitSystemCombBox.Text == "MMGS")
+                            {
+                                radius = radius / 1000.0;
                                 break;
+                            }  
                             else
-                                radius = 0.0393701 * radius;
+                                radius = MeasuringUnitsConvertor.Length.FromInchToMillimeters(radius) / 1000.0;
                             break;
                         }
                     case (int)swLengthUnit_e.swINCHES:
                         if (UnitSystemCombBox.Text == "IPS")
                             break;
                         else
-                            radius = radius * 25.4;
+                            radius = MeasuringUnitsConvertor.Length.FromMillimetersToInchs(radius);
                         break;
                     default:
                         break;
@@ -595,7 +606,7 @@ namespace PowerSM
                             if (swSheetMetalDataFeature.PositionType == (int)swFlangePositionTypes_e.swFlangePositionTypeBendOutside)
                             {
                                 swSheetMetalDataFeature.UsePositionOffset = true;
-                                var dif = (radius / 1000.0) - swSheetMetalDataFeature.BendRadius; // difference between old radius and new radius
+                                var dif = radius - swSheetMetalDataFeature.BendRadius; // difference between old radius and new radius
                                 if (dif >= 0)
                                 {
                                     swSheetMetalDataFeature.PositionOffsetType = (int)swFlangeOffsetTypes_e.swFlangeOffsetBlind;
@@ -612,10 +623,10 @@ namespace PowerSM
                         }        
                     }
 
-                    swSheetMetalDataFeature.BendRadius = (radius * 1.0) / 1000.0;
+                    swSheetMetalDataFeature.BendRadius = (radius * 1.0);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
                     
-                    Results.Add(string.Format("\t * changing {0}'s radius to {1} : {2}.", swFeature.Name, radius.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * changing {0}'s radius to {1} : {2}.", swFeature.Name, radius.ToString("00.00"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
                 }
@@ -637,7 +648,8 @@ namespace PowerSM
 
             try
             {
-
+                #region sheetmetalfolder 
+                // change sheet metal folder data
                 FeatureManager swFeatureManager = swModelDoc.FeatureManager;
                 var swFeatures = swFeatureManager.GetFeatures(false);
                 var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
@@ -679,13 +691,15 @@ namespace PowerSM
                     
                     swSheetMetalFeatureDataFromFolder.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalFeatureDataFromFolder, swModelDoc, null);
-                    Results.Add(string.Format("\t * changing {0}'s bend zone value to {1} : {2}.", swSheetMetalFolderFeature.Name, BendZoneValue.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * changing {0}'s bend zone value to {1} : {2}.", swSheetMetalFolderFeature.Name, BendZoneValue.ToString("00.00"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
                 }
 
-                    // Change kfactor of features from feature manager
+                #endregion
+                #region sheet metal features 
+                // Change kfactor of features from feature manager
 
-                    foreach (Feature swFeature in swFeatures)
+                foreach (Feature swFeature in swFeatures)
                 {
                     dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithKFactorProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
                     if (swSheetMetalDataFeature == null)
@@ -723,10 +737,12 @@ namespace PowerSM
                     }
                     swSheetMetalDataFeature.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * changing {0}'s bend zone to {1} : {2}.", swFeature.Name, BendZoneValue.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * changing {0}'s bend zone to {1} : {2}.", swFeature.Name, BendZoneValue.ToString("00.00"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
-                }
+                    #endregion
+            }
+
 
 
                 return Results.ToArray<string>();
@@ -738,8 +754,10 @@ namespace PowerSM
                 return Results.ToArray<string>();
 
             }
+
         }
         private string[] ForceChangeThickness(ModelDoc2 swModelDoc, double Thickness)
+
         {
            
 
@@ -757,16 +775,20 @@ namespace PowerSM
                     case (int)swLengthUnit_e.swMIL:
                         {
                             if (UnitSystemCombBox.Text == "MMGS")
-                                break;
+                            {
+                            Thickness = Thickness / 1000.0;
+                            break; 
+                            }
+                                
                             else
-                                Thickness = 0.0393701 * Thickness;
+                            Thickness = MeasuringUnitsConvertor.Length.FromInchToMillimeters(Thickness) / 1000.0;
                             break;
                         }
                     case (int)swLengthUnit_e.swINCHES:
                         if (UnitSystemCombBox.Text == "IPS")
                             break;
                         else
-                            Thickness = Thickness * 25.4;
+                            Thickness = MeasuringUnitsConvertor.Length.FromMillimetersToInchs(Thickness) ;
                         break;
                     default:
                         break;
@@ -779,9 +801,9 @@ namespace PowerSM
                     dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithThicknessProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
                     if (swSheetMetalDataFeature == null)
                         continue;
-                    swSheetMetalDataFeature.Thickness = Thickness / 1000.0;
+                    swSheetMetalDataFeature.Thickness = Thickness;
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * changing {0}'s thickness to {1} : {2}.", swFeature.Name, Thickness.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * changing {0}'s thickness to {1} : {2}.", swFeature.Name, Thickness.ToString("00.00"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
                 }
@@ -797,7 +819,9 @@ namespace PowerSM
 
             }
         }
-
+        
+        // normal mode: all changes must be done from the sheet metal folder and not the features 
+           
         private string[] ChangeRadius(ModelDoc2 swModelDoc, double radius)
         {
 
@@ -809,7 +833,7 @@ namespace PowerSM
             try
             {
 
-
+                #region units
                 // Check unit system and convert radius to corresponding value
                 int LengthUnit = swModelDoc.LengthUnit;
                 switch (LengthUnit)
@@ -817,28 +841,39 @@ namespace PowerSM
                     case (int)swLengthUnit_e.swMIL:
                         {
                             if (UnitSystemCombBox.Text == "MMGS")
+                            {
+                                radius = radius / 1000.0;
                                 break;
+                            }
+                              
                             else
-                                radius = 0.0393701 * radius;
+                                radius = MeasuringUnitsConvertor.Length.FromInchToMillimeters(radius) / 1000.0;
                             break;
                         }
                     case (int)swLengthUnit_e.swINCHES:
                         if (UnitSystemCombBox.Text == "IPS")
                             break;
                         else
-                            radius = radius * 25.4;
+                            radius = MeasuringUnitsConvertor.Length.FromMillimetersToInchs(radius);
                         break;
                     default:
                         break;
                 }
+                #endregion
 
+                // change sheet metal folder data
                 FeatureManager swFeatureManager = swModelDoc.FeatureManager;
                 var swFeatures = swFeatureManager.GetFeatures(false);
-                foreach (Feature swFeature in swFeatures)
+                var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
+               
+                Feature swSheetMetalFolderFeature = swSheetMetalFolder.GetFeature();
+                dynamic swSheetMetalDataFeature = ("SheetMetalFeature" == swSheetMetalFolderFeature.GetTypeName()) ? swSheetMetalFolderFeature.GetDefinition() : null;
+
+                if (swSheetMetalDataFeature == null)
                 {
-                    dynamic swSheetMetalDataFeature = ("SheetMetalFeature" == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
-                    if (swSheetMetalDataFeature == null)
-                        continue;
+                    throw new Exception("Could find not Sheet metal folder.");
+                }
+                     
 
                     if (swSheetMetalDataFeature is SheetMetalFeatureData)
                     {
@@ -846,13 +881,13 @@ namespace PowerSM
                         swSheetMetalThickness = swSheetMetalDataFeature.Thickness;
                     }
 
-                    swSheetMetalDataFeature.BendRadius = (radius * 1.0) / 1000.0;
-                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
+                    swSheetMetalDataFeature.BendRadius = radius * 1.0 ;
+                    bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
 
-                    Results.Add(string.Format("\t *NORMAL MODE: changing {0}'s radius to {1} : {2}.", swFeature.Name, radius.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t *NORMAL MODE: changing {0}'s radius to {1} : {2}.", swSheetMetalFolderFeature.Name, radius.ToString("00.00"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
-                }
+                 
 
 
                 return Results.ToArray<string>();
@@ -883,7 +918,7 @@ namespace PowerSM
 
                     switch (BendZoneCheckedBox.Text)
                     {
-
+                        #region units
                         default:
                             break;
                         case "KFactor":
@@ -907,12 +942,12 @@ namespace PowerSM
                                 break;
                             }
 
-
+                            #endregion
 
                     }
                     swSheetMetalFeatureDataFromFolder.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalFeatureDataFromFolder, swModelDoc, null);
-                    Results.Add(string.Format("\t *: changing {0}'s bend zone to {1} : {2}.", swSheetMetalFolderFeature.Name, BendZoneValue.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * NORMAL MODE: Changing {0}'s bend zone to {1} : {2}.", swSheetMetalFolderFeature.Name, BendZoneValue.ToString("00.00"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
                 }
 
@@ -957,7 +992,7 @@ namespace PowerSM
                     }
                     swSheetMetalDataFeature.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * changing {0}'s bend zone to {1} : {2}.", swFeature.Name, BendZoneValue.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * NORMAL MODE: changing {0}'s bend zone to {1} : {2}.", swFeature.Name, BendZoneValue.ToString("00.00"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
                 }
@@ -975,15 +1010,13 @@ namespace PowerSM
         }
         private string[] ChangeThickness(ModelDoc2 swModelDoc, double Thickness)
         {
-
-
+ 
             List<string> Results = new List<string>();
-
-
+ 
             try
             {
-
-
+ 
+                #region units
                 // Check unit system and convert radius to corresponding value
                 int LengthUnit = swModelDoc.LengthUnit;
                 switch (LengthUnit)
@@ -991,44 +1024,47 @@ namespace PowerSM
                     case (int)swLengthUnit_e.swMIL:
                         {
                             if (UnitSystemCombBox.Text == "MMGS")
+                            {
+                                Thickness = Thickness / 1000.0;
                                 break;
+                            }
                             else
-                                Thickness = 0.0393701 * Thickness;
+                                Thickness = MeasuringUnitsConvertor.Length.FromInchToMillimeters (Thickness) / 1000.0;
                             break;
                         }
                     case (int)swLengthUnit_e.swINCHES:
                         if (UnitSystemCombBox.Text == "IPS")
-                            break;
+                          {
+                            Thickness = MeasuringUnitsConvertor.Length.FromInchToMillimeters(Thickness) / 1000.0;
+                            break; }
+                            
                         else
-                            Thickness = Thickness * 25.4;
+                            Thickness = Thickness / 1000.0 ;
                         break;
                     default:
                         break;
                 }
-                // missing overrride for bend tables 
+                #endregion
+
+                
+
                 FeatureManager swFeatureManager = swModelDoc.FeatureManager;
-                var swFeatures = swFeatureManager.GetFeatures(false);
-                foreach (Feature swFeature in swFeatures)
-                {
-                    dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithThicknessProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
-                    if (swSheetMetalDataFeature == null)
-                        continue;
-                    swSheetMetalDataFeature.Thickness = Thickness / 1000.0;
-                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * NORMAL MODE: changing {0}'s thickness to {1} : {2}.", swFeature.Name, Thickness.ToString(), FeatureResult ? "SUCCESS" : "FAILURE"));
+               
+                var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
+                if (swSheetMetalFolder == null)
+                {   throw new Exception("Could not find sheet metal folder");  }
 
-
-                }
-
-
+                Feature swSheetMetalFolderFeature = swSheetMetalFolder.GetFeature();
+                SheetMetalFeatureData swSheetMetalDataFeature =  (SheetMetalFeatureData)swSheetMetalFolderFeature.GetDefinition();
+                swSheetMetalDataFeature.Thickness = Thickness;
+                bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
+                Results.Add(string.Format("\t * NORMAL MODE: changing {0}'s thickness to {1} : {2}.", swSheetMetalFolderFeature.Name, Thickness.ToString("00.00"), FeatureResult ? "SUCCESS" : "FAILURE"));
                 return Results.ToArray<string>();
-
             }
+
             catch (Exception exception)
             {
-
                 return Results.ToArray<string>();
-
             }
         }
 
