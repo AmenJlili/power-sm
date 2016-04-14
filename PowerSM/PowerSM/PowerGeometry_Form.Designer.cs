@@ -33,6 +33,8 @@
             this.FilesTreeGroupBox = new System.Windows.Forms.GroupBox();
             this.FilesTreeView = new System.Windows.Forms.TreeView();
             this.SheetMetalDataGroupBox = new System.Windows.Forms.GroupBox();
+            this.BendZoneCheckedBox = new System.Windows.Forms.ComboBox();
+            this.label3 = new System.Windows.Forms.Label();
             this.BendZoneTextBox = new System.Windows.Forms.TextBox();
             this.BendZoneValue = new System.Windows.Forms.Label();
             this.ThicknessTextBox = new System.Windows.Forms.TextBox();
@@ -64,8 +66,6 @@
             this.OpenFolder = new System.Windows.Forms.Button();
             this.LogGroupBox = new System.Windows.Forms.GroupBox();
             this.LogTextBox = new System.Windows.Forms.TextBox();
-            this.label3 = new System.Windows.Forms.Label();
-            this.BendZoneCheckedBox = new System.Windows.Forms.ComboBox();
             this.FilesTreeGroupBox.SuspendLayout();
             this.SheetMetalDataGroupBox.SuspendLayout();
             this.statusStrip.SuspendLayout();
@@ -127,6 +127,28 @@
             this.SheetMetalDataGroupBox.TabIndex = 2;
             this.SheetMetalDataGroupBox.TabStop = false;
             this.SheetMetalDataGroupBox.Text = "Sheet Metal Data";
+            // 
+            // BendZoneCheckedBox
+            // 
+            this.BendZoneCheckedBox.FormattingEnabled = true;
+            this.BendZoneCheckedBox.Items.AddRange(new object[] {
+            "KFactor",
+            "Bend Allowance",
+            "Bend Deduction"});
+            this.BendZoneCheckedBox.Location = new System.Drawing.Point(258, 37);
+            this.BendZoneCheckedBox.Name = "BendZoneCheckedBox";
+            this.BendZoneCheckedBox.Size = new System.Drawing.Size(113, 21);
+            this.BendZoneCheckedBox.TabIndex = 10;
+            this.BendZoneCheckedBox.Text = "KFactor";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(188, 41);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(63, 13);
+            this.label3.TabIndex = 9;
+            this.label3.Text = "Bend Zone:";
             // 
             // BendZoneTextBox
             // 
@@ -328,7 +350,7 @@
             // 
             this.optionsToolStripMenuItem1.Name = "optionsToolStripMenuItem1";
             this.optionsToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.O)));
-            this.optionsToolStripMenuItem1.Size = new System.Drawing.Size(152, 22);
+            this.optionsToolStripMenuItem1.Size = new System.Drawing.Size(151, 22);
             this.optionsToolStripMenuItem1.Text = "Options";
             this.optionsToolStripMenuItem1.Click += new System.EventHandler(this.optionsToolStripMenuItem1_Click);
             // 
@@ -428,28 +450,6 @@
             this.LogTextBox.Name = "LogTextBox";
             this.LogTextBox.Size = new System.Drawing.Size(471, 82);
             this.LogTextBox.TabIndex = 0;
-            // 
-            // label3
-            // 
-            this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(188, 41);
-            this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(63, 13);
-            this.label3.TabIndex = 9;
-            this.label3.Text = "Bend Zone:";
-            // 
-            // BendZoneCheckedBox
-            // 
-            this.BendZoneCheckedBox.FormattingEnabled = true;
-            this.BendZoneCheckedBox.Items.AddRange(new object[] {
-            "KFactor",
-            "Bend Allowance",
-            "Bend Deducation"});
-            this.BendZoneCheckedBox.Location = new System.Drawing.Point(258, 37);
-            this.BendZoneCheckedBox.Name = "BendZoneCheckedBox";
-            this.BendZoneCheckedBox.Size = new System.Drawing.Size(113, 21);
-            this.BendZoneCheckedBox.TabIndex = 10;
-            this.BendZoneCheckedBox.Text = "KFactor";
             // 
             // PowerGeometryForm
             // 

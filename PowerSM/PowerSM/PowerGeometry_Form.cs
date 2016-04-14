@@ -538,7 +538,7 @@ namespace PowerSM
 
 
         // NEED REWORK
-        // Force  mode: all changes must be done on the features and all default values must be overridden  
+        //OK
         private string[] ForceChangeRadius(ModelDoc2 swModelDoc, double radius)
         {
 
@@ -628,7 +628,7 @@ namespace PowerSM
                     swSheetMetalDataFeature.BendRadius = (radius * 1.0);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
                     
-                    Results.Add(string.Format("\t * changing {0}'s radius to {1} : {2}.", swFeature.Name, radius.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s radius to {1} : {2}.", swFeature.Name, radius.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
                 }
@@ -664,19 +664,26 @@ namespace PowerSM
 
                     switch (BendZoneCheckedBox.Text)
                     {
-                      
+                       
                         default:
                             break;
-                        case "KFactor": 
+                        case "KFactor":
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
-                                swCustomBendAllowance.KFactor = (double)BendZoneValue;
+                                swCustomBendAllowance.KFactor = BendZoneValue;
                                 break;
                             }
                         case "Bend Allowance":
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
-                                swCustomBendAllowance.BendAllowance = (double)BendZoneValue;
+                                // Unit checking
+                                if (UnitSystemCombBox.Text == "IPS")
+                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
+                                else
+                                    BendZoneValue = BendZoneValue / 1000.0;
+
+                                swCustomBendAllowance.BendAllowance = BendZoneValue;
+                                BendZoneValue = BendZoneValue * 1000.0;
                                 break;
 
                             }
@@ -684,17 +691,22 @@ namespace PowerSM
                         case "Bend Deduction":
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
-                                swCustomBendAllowance.BendDeduction = (double)BendZoneValue;
+                                // Unit checking
+                                if (UnitSystemCombBox.Text == "IPS")
+                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
+                                else
+                                    BendZoneValue = BendZoneValue / 1000.0;
+
+                                swCustomBendAllowance.BendDeduction = BendZoneValue;
+                                BendZoneValue = BendZoneValue * 1000.0;
                                 break;
                             }
-
-                     
+                   }
                          
-                    }
-                    
-                    swSheetMetalFeatureDataFromFolder.SetCustomBendAllowance(swCustomBendAllowance);
+
+                            swSheetMetalFeatureDataFromFolder.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalFeatureDataFromFolder, swModelDoc, null);
-                    Results.Add(string.Format("\t * changing {0}'s bend zone value to {1} : {2}.", swSheetMetalFolderFeature.Name, BendZoneValue.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s bend zone value to {1} : {2}.", swSheetMetalFolderFeature.Name, BendZoneValue.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
                 }
 
@@ -717,13 +729,20 @@ namespace PowerSM
                         case "KFactor":
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
-                                swCustomBendAllowance.KFactor = (double)BendZoneValue;
+                                swCustomBendAllowance.KFactor = BendZoneValue;
                                 break;
                             }
                         case "Bend Allowance":
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
-                                swCustomBendAllowance.BendAllowance = (double)BendZoneValue;
+                                // Unit checking
+                                if (UnitSystemCombBox.Text == "IPS")
+                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
+                                else
+                                    BendZoneValue = BendZoneValue / 1000.0;
+
+                                swCustomBendAllowance.BendAllowance = BendZoneValue;
+                                BendZoneValue = BendZoneValue * 1000.0;
                                 break;
 
                             }
@@ -731,16 +750,20 @@ namespace PowerSM
                         case "Bend Deduction":
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
-                                swCustomBendAllowance.BendDeduction = (double)BendZoneValue;
+                                // Unit checking
+                                if (UnitSystemCombBox.Text == "IPS")
+                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
+                                else
+                                    BendZoneValue = BendZoneValue / 1000.0;
+
+                                swCustomBendAllowance.BendDeduction = BendZoneValue;
+                                BendZoneValue = BendZoneValue * 1000.0;
                                 break;
                             }
-
-
-
                     }
                     swSheetMetalDataFeature.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * changing {0}'s bend zone to {1} : {2}.", swFeature.Name, BendZoneValue.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s bend zone to {1} : {2}.", swFeature.Name, BendZoneValue.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
                     #endregion
@@ -810,7 +833,7 @@ namespace PowerSM
                         continue;
                     swSheetMetalDataFeature.Thickness = Thickness;
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * changing {0}'s thickness to {1} : {2}.", swFeature.Name, Thickness.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s thickness to {1} : {2}.", swFeature.Name, Thickness.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
 
                 }
@@ -894,7 +917,7 @@ namespace PowerSM
 
             }
         }
-        // Needs rework on units
+        // Needs Testing
         private string[] ChangeBendZone(ModelDoc2 swModelDoc, double BendZoneValue)
         {
             List<string> Results = new List<string>();
@@ -919,13 +942,20 @@ namespace PowerSM
                         case "KFactor":
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
-                                swCustomBendAllowance.KFactor = (double)BendZoneValue;
+                                swCustomBendAllowance.KFactor = BendZoneValue;
                                 break;
                             }
                         case "Bend Allowance":
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
-                                swCustomBendAllowance.BendAllowance = (double)BendZoneValue;
+                                // Unit checking
+                                if (UnitSystemCombBox.Text == "IPS")
+                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
+                                else
+                                    BendZoneValue = BendZoneValue / 1000.0;
+
+                                swCustomBendAllowance.BendAllowance = BendZoneValue;
+                                BendZoneValue = BendZoneValue * 1000.0;
                                 break;
 
                             }
@@ -933,7 +963,14 @@ namespace PowerSM
                         case "Bend Deduction":
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
-                                swCustomBendAllowance.BendDeduction = (double)BendZoneValue;
+                                // Unit checking
+                                if (UnitSystemCombBox.Text == "IPS")
+                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
+                                else
+                                    BendZoneValue = BendZoneValue / 1000.0;
+
+                                swCustomBendAllowance.BendDeduction = BendZoneValue;
+                                BendZoneValue = BendZoneValue * 1000.0;
                                 break;
                             }
 
@@ -945,53 +982,6 @@ namespace PowerSM
                     Results.Add(string.Format("\t * NORMAL MODE: Changing {0}'s bend zone to {1} : {2}.", swSheetMetalFolderFeature.Name, BendZoneValue.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
 
                 }
-
-                // Change kfactor of features from feature manager
-
-                foreach (Feature swFeature in swFeatures)
-                {
-                    dynamic swSheetMetalDataFeature = ( "SheetMetalFeature" == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
-                    if (swSheetMetalDataFeature == null)
-                        continue;
-                    // missing overrride for bend tables  
-                    CustomBendAllowance swCustomBendAllowance = swSheetMetalDataFeature.GetCustomBendAllowance();
-
-                    switch (BendZoneCheckedBox.Text)
-                    {
-
-                        default:
-                            break;
-                        case "KFactor":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
-                                swCustomBendAllowance.KFactor = (double)BendZoneValue;
-                                break;
-                            }
-                        case "Bend Allowance":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
-                                swCustomBendAllowance.BendAllowance = (double)BendZoneValue;
-                                break;
-
-                            }
-
-                        case "Bend Deduction":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
-                                swCustomBendAllowance.BendDeduction = (double)BendZoneValue;
-                                break;
-                            }
-
-
-
-                    }
-                    swSheetMetalDataFeature.SetCustomBendAllowance(swCustomBendAllowance);
-                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * NORMAL MODE: changing {0}'s bend zone to {1} : {2}.", swFeature.Name, BendZoneValue.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
-
-
-                }
-
 
                 return Results.ToArray<string>();
 
