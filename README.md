@@ -1,4 +1,3 @@
-git tag -a 1.2
 #power-sm Add-in for SolidWorks
 
 
