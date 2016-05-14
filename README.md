@@ -1,10 +1,11 @@
 #power-sm Add-in for SolidWorks
 
 
-<a href="http://ctrlv.in/703138" target="_blank"><img src="http://img.ctrlv.in/img/16/01/27/56a928a2acde0.jpg" alt="PowerSM 1.1" /><br/>PowerSM 1.1 </a>
-<br><center><b>Screenshot: </b>Pre-release 1.1</center>
+<a href="" target="_blank"><img src="http://img.ctrlv.in/img/16/04/15/5710ce54885e9.jpg" alt="PowerSM 1.1" /><br/>PowerSM 1.2 </a>
+<br><center>
 # Version History:
 
+- 04/14/2016: 1.2  release
 - 01/20/2016: 1.1  release
 - 01/03/2016: 1.0  release
 
