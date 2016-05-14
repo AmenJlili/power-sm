@@ -45,12 +45,12 @@ namespace PowerSM
             swSheetMetalFeatureTypeWithRadiusProperty.AddRange(new[] {"SMBaseFlange",
                                                     "EdgeFlange",
                                                     "SMBaseFlange",
-                                                    "SketchedBend",
+                                                    "SketchBend",
                                                     "SheetMetal",
                                                     "OneBend",
                                                     "SMMiteredFlange",
                                                     "Jog",
-                                                    "Bends"});
+                                                    "ProcessBends"});
             swSheetMetalFeatureTypeWithKFactorProperty = new List<string>();
             swSheetMetalFeatureTypeWithKFactorProperty.AddRange(new[] {
                                                     "EdgeFlange",
@@ -451,8 +451,88 @@ namespace PowerSM
                 
               else
                 {
-                    // change thickness
-                    if (thickness > 0)
+                    if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["SetOverrideToFalse"]) == true) { 
+                    #region "Remove all overriding parameters"
+
+                    FeatureManager swFeatureManager = swModelDoc.FeatureManager;
+                    var swFeatures = swFeatureManager.GetFeatures(false);
+                    var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
+                    // remove any overridden parameters from sheet metal 
+                    foreach (Object FeatObj in swSheetMetalFolder.GetSheetMetals())
+                    {
+                        var swSheetMetalFeature = (Feature)FeatObj;
+                        SheetMetalFeatureData swSheetMetalFeatureData = swSheetMetalFeature.GetDefinition();
+                        swSheetMetalFeatureData.SetOverrideDefaultParameter(false);
+                       bool r = swSheetMetalFeature.ModifyDefinition((object)swSheetMetalFeatureData, swModelDoc, null);
+                       Results.Add(string.Format("\n\t * Trying to make sheet named {1} inherit from parent SM folder: {0}...\n", r.ToString(), swSheetMetalFeature.Name));
+                        }
+
+                    // make sure sheet metal features use default parameters 
+                    foreach (Object FeatObj in swFeatures)
+                    {
+                        var swSheetMetalFeature = (Feature)FeatObj;
+                         
+                        // set default radius and bend allowance to true
+                        dynamic swSheetMetalFeatureData = (new List<string> {
+                                                    "EdgeFlange",
+                                                    "SM3dBend",
+                                                    "SketchBend",
+                                                    "OneBend", 
+                                                    "SMMiteredFlange",
+                                                    "Jog",
+                                                    "Bends",
+                                                    "ProcessBends",
+                                                    "FlattenBends",
+                        }).Exists((x) => x == swSheetMetalFeature.GetTypeName2()) ? swSheetMetalFeature.GetDefinition() : null;
+                        if (swSheetMetalFeatureData != null)
+                        {
+                                swSheetMetalFeatureData.UseDefaultBendRadius = true;
+                            swSheetMetalFeatureData.UseDefaultBendAllowance = true;
+                           bool r =  swSheetMetalFeature.ModifyDefinition((object)swSheetMetalFeatureData, swModelDoc, null);
+                           Results.Add(string.Format("\n\t * Attempting to make feature named {1} inherit parameters from parent feature/sheet: {0}...\n", r.ToString(), swSheetMetalFeature.Name));
+                            }
+                        // set default radius and thickness for base flange
+                        dynamic swBaseFlangeFeatureData = "SMBaseFlange" == swSheetMetalFeature.GetTypeName2() ? swSheetMetalFeature.GetDefinition() : null;
+                        if (swBaseFlangeFeatureData != null)
+                        {
+                                if (swBaseFlangeFeatureData.UseGaugeTable == true)
+                                {
+                                    swBaseFlangeFeatureData.OverrideThickness = false;
+                                    swBaseFlangeFeatureData.OverrideRadius = false;
+                                    swBaseFlangeFeatureData.OverrideKFactor = false;
+                                    bool r = swSheetMetalFeature.ModifyDefinition((object)swBaseFlangeFeatureData, swModelDoc, null);
+                                    Results.Add(string.Format("\n\t * Attempting to set override of base flange feature named {1} to false: {0}...\n", r.ToString(), swSheetMetalFeature.Name));
+
+                                }
+                            }
+
+
+                            dynamic swHemSheetMetalFeatureData = "Hem" == swSheetMetalFeature.GetTypeName2() ? swSheetMetalFeature.GetDefinition() : null;
+                            if (swHemSheetMetalFeatureData != null)
+                            {
+                                swHemSheetMetalFeatureData.UseDefaultBendAllowance = false;
+                                bool r = swSheetMetalFeature.ModifyDefinition((object)swHemSheetMetalFeatureData, swModelDoc, null);
+                                Results.Add(string.Format("\n\t * Attempting to make hem feature named {1} uses default bend allowance: {0}...\n", r.ToString(), swSheetMetalFeature.Name));
+                            }
+
+
+                            dynamic swBendReliefSheetMetalFeatureData= (new List<string> {"EdgeFlange","OneBend","SketchBend"}).Exists( (x) => x ==  swSheetMetalFeature.GetTypeName2()) ? swSheetMetalFeature.GetDefinition() : null;
+                            if (swBendReliefSheetMetalFeatureData != null)
+                            {
+                                swBendReliefSheetMetalFeatureData.UseDefaultBendRelief = false;
+                                bool r = swSheetMetalFeature.ModifyDefinition((object)swBendReliefSheetMetalFeatureData, swModelDoc, null);
+                                Results.Add(string.Format("\n\t * Attempting to make feature named {1} uses default bend relief: {0}...\n", r.ToString(), swSheetMetalFeature.Name));
+                            }
+                    
+
+
+                    }
+                        #endregion
+                    }
+
+
+                        // change thickness
+                        if (thickness > 0)
                     {
                         
                         Results.AddRange(ChangeThickness(swModelDoc, thickness));
@@ -891,10 +971,13 @@ namespace PowerSM
                 }
                 #endregion
 
-                // change sheet metal folder data
+               
+
                 FeatureManager swFeatureManager = swModelDoc.FeatureManager;
                 var swFeatures = swFeatureManager.GetFeatures(false);
                 var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
+            
+                // change sheet metal folder data
                 var swSheetMetalFolder2 = new SheetMetalFolder2(swSheetMetalFolder);
 
                 bool FeatureResult = swSheetMetalFolder2.BendRadius(radius);
@@ -928,6 +1011,8 @@ namespace PowerSM
                 FeatureManager swFeatureManager = swModelDoc.FeatureManager;
                 var swFeatures = swFeatureManager.GetFeatures(false);
                 var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
+
+
                 if (!(swSheetMetalFolder == null))
                 {
                     Feature swSheetMetalFolderFeature = swSheetMetalFolder.GetFeature();

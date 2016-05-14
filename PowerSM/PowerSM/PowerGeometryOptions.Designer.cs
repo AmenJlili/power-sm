@@ -32,16 +32,19 @@
             this.ForceDimensionalRespectCheckBox = new System.Windows.Forms.CheckBox();
             this.ArchiveInZipFormatCheckBox = new System.Windows.Forms.CheckBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.SetOverrideToFalse = new System.Windows.Forms.CheckBox();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
+            this.ForceMode = new System.Windows.Forms.CheckBox();
             this.SaveOptionsButton = new System.Windows.Forms.Button();
             this.helpProvider1 = new System.Windows.Forms.HelpProvider();
-            this.ForceMode = new System.Windows.Forms.CheckBox();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
             // 
             // ForceDimensionalRespectCheckBox
             // 
             this.ForceDimensionalRespectCheckBox.AutoSize = true;
-            this.ForceDimensionalRespectCheckBox.Location = new System.Drawing.Point(17, 42);
+            this.ForceDimensionalRespectCheckBox.Location = new System.Drawing.Point(17, 132);
             this.ForceDimensionalRespectCheckBox.Name = "ForceDimensionalRespectCheckBox";
             this.ForceDimensionalRespectCheckBox.Size = new System.Drawing.Size(430, 17);
             this.ForceDimensionalRespectCheckBox.TabIndex = 0;
@@ -52,7 +55,7 @@
             // ArchiveInZipFormatCheckBox
             // 
             this.ArchiveInZipFormatCheckBox.AutoSize = true;
-            this.ArchiveInZipFormatCheckBox.Location = new System.Drawing.Point(17, 65);
+            this.ArchiveInZipFormatCheckBox.Location = new System.Drawing.Point(17, 155);
             this.ArchiveInZipFormatCheckBox.Name = "ArchiveInZipFormatCheckBox";
             this.ArchiveInZipFormatCheckBox.Size = new System.Drawing.Size(142, 17);
             this.ArchiveInZipFormatCheckBox.TabIndex = 1;
@@ -61,25 +64,50 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.SetOverrideToFalse);
+            this.groupBox1.Controls.Add(this.label2);
+            this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.ForceMode);
             this.groupBox1.Controls.Add(this.ForceDimensionalRespectCheckBox);
             this.groupBox1.Controls.Add(this.ArchiveInZipFormatCheckBox);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(488, 102);
+            this.groupBox1.Size = new System.Drawing.Size(555, 200);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Options";
             // 
-            // SaveOptionsButton
+            // SetOverrideToFalse
             // 
-            this.SaveOptionsButton.Location = new System.Drawing.Point(431, 120);
-            this.SaveOptionsButton.Name = "SaveOptionsButton";
-            this.SaveOptionsButton.Size = new System.Drawing.Size(69, 27);
-            this.SaveOptionsButton.TabIndex = 3;
-            this.SaveOptionsButton.Text = "OK";
-            this.SaveOptionsButton.UseVisualStyleBackColor = true;
-            this.SaveOptionsButton.Click += new System.EventHandler(this.SaveOptionsButton_Click);
+            this.SetOverrideToFalse.AutoSize = true;
+            this.SetOverrideToFalse.Location = new System.Drawing.Point(17, 66);
+            this.SetOverrideToFalse.Name = "SetOverrideToFalse";
+            this.SetOverrideToFalse.Size = new System.Drawing.Size(271, 17);
+            this.SetOverrideToFalse.TabIndex = 5;
+            this.SetOverrideToFalse.Text = "Force all features to inherit data from parent features";
+            this.SetOverrideToFalse.UseVisualStyleBackColor = true;
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.ForeColor = System.Drawing.SystemColors.ControlDark;
+            this.label2.Location = new System.Drawing.Point(34, 86);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(449, 39);
+            this.label2.TabIndex = 4;
+            this.label2.Text = resources.GetString("label2.Text");
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.ForeColor = System.Drawing.SystemColors.ControlDark;
+            this.label1.Location = new System.Drawing.Point(34, 39);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(428, 26);
+            this.label1.TabIndex = 3;
+            this.label1.Text = "This mode will override all parameters of all features. Any inheritance from the " +
+    "Sheet Metal\r\nFolder or the Sheet Metal feature will be broken. This is highly un" +
+    "recommended.";
             // 
             // ForceMode
             // 
@@ -90,12 +118,23 @@
             this.ForceMode.TabIndex = 2;
             this.ForceMode.Text = "Force Mode";
             this.ForceMode.UseVisualStyleBackColor = true;
+            this.ForceMode.CheckedChanged += new System.EventHandler(this.ForceMode_CheckedChanged);
+            // 
+            // SaveOptionsButton
+            // 
+            this.SaveOptionsButton.Location = new System.Drawing.Point(473, 243);
+            this.SaveOptionsButton.Name = "SaveOptionsButton";
+            this.SaveOptionsButton.Size = new System.Drawing.Size(94, 27);
+            this.SaveOptionsButton.TabIndex = 3;
+            this.SaveOptionsButton.Text = "OK";
+            this.SaveOptionsButton.UseVisualStyleBackColor = true;
+            this.SaveOptionsButton.Click += new System.EventHandler(this.SaveOptionsButton_Click);
             // 
             // PowerGeometryOptions
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(512, 162);
+            this.ClientSize = new System.Drawing.Size(579, 282);
             this.Controls.Add(this.SaveOptionsButton);
             this.Controls.Add(this.groupBox1);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
@@ -121,5 +160,8 @@
         private System.Windows.Forms.Button SaveOptionsButton;
         private System.Windows.Forms.HelpProvider helpProvider1;
         private System.Windows.Forms.CheckBox ForceMode;
+        private System.Windows.Forms.CheckBox SetOverrideToFalse;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label1;
     }
 }

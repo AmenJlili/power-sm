@@ -23,6 +23,18 @@ namespace PowerSM
            ArchiveInZipFormatCheckBox.Checked = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]);
            ForceMode.Checked = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["Force"]);
 
+
+            if (ForceMode.Checked == true)
+            {
+                SetOverrideToFalse.Checked = false;
+                System.Configuration.ConfigurationSettings.AppSettings["SetOverrideToFalse"] = "False";
+                SetOverrideToFalse.Enabled = false;
+            }
+            else
+            {
+                SetOverrideToFalse.Enabled = true;
+                SetOverrideToFalse.Checked = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["SetOverrideToFalse"]);
+            }
         }
 
         private void SaveOptionsButton_Click(object sender, EventArgs e)
@@ -30,7 +42,35 @@ namespace PowerSM
             System.Configuration.ConfigurationSettings.AppSettings["ForceDimensionalRespect"] = ForceDimensionalRespectCheckBox.Checked.ToString();
             System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"] = ArchiveInZipFormatCheckBox.Checked.ToString();
             System.Configuration.ConfigurationSettings.AppSettings["Force"] = ForceMode.Checked.ToString();
+            if ( ForceMode.Checked == true )
+            {
+                SetOverrideToFalse.Checked = false; 
+                System.Configuration.ConfigurationSettings.AppSettings["SetOverrideToFalse"] = "False";
+                SetOverrideToFalse.Enabled = false; 
+            }
+            else
+            {
+                SetOverrideToFalse.Enabled = true;
+                System.Configuration.ConfigurationSettings.AppSettings["SetOverrideToFalse"] = SetOverrideToFalse.Checked.ToString();
+            }
+ 
+
+      
             this.Close();
+        }
+
+        private void ForceMode_CheckedChanged(object sender, EventArgs e)
+        {
+            if (ForceMode.Checked == true)
+            {
+                SetOverrideToFalse.Enabled = false;
+
+            }
+            else
+            {
+                SetOverrideToFalse.Enabled = true;
+            }
+
         }
     }
 }
