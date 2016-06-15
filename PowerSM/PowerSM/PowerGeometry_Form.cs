@@ -288,7 +288,14 @@ namespace PowerSM
             }
 
             double BendZoneValue;
+             
             if (!double.TryParse(String.IsNullOrWhiteSpace(BendZoneTextBox.Text) ? "0" : BendZoneTextBox.Text, out BendZoneValue))
+            {
+               ErrorEchoer.Err((int)PowerSMEnums.Errors.cannot_parse_kfacor);
+               return; 
+            }
+
+            if (BendZoneValue > 1)
             {
                 ErrorEchoer.Err((int)PowerSMEnums.Errors.cannot_parse_kfacor);
                 return;
@@ -430,7 +437,7 @@ namespace PowerSM
                     Results.AddRange(ForceChangeThickness(swModelDoc, thickness));
 
                 }
-                // change k-factor
+                // change BendZone value
                 if (BendZoneValue > 0)
                 {
                     Results.AddRange(ForceChangeBendZone(swModelDoc, BendZoneValue));
@@ -617,8 +624,8 @@ namespace PowerSM
         }
 
 
-        // NEED REWORK
-        //OK
+     
+      
         private string[] ForceChangeRadius(ModelDoc2 swModelDoc, double radius)
         {
 
@@ -635,25 +642,34 @@ namespace PowerSM
                 int LengthUnit = swModelDoc.LengthUnit;
                 switch (LengthUnit)
                 {
-                    case (int)swLengthUnit_e.swMIL:
+                    case (int)swLengthUnit_e.swMM:
                         {
                             if (UnitSystemCombBox.Text == "MMGS")
                             {
-                                radius = radius / 1000.0;
-                                break;
-                            }  
+                                //radius = radius / 1000.0;
+
+                            }
+
                             else
-                                radius = MeasuringUnitsConvertor.Length.FromInchToMillimeters(radius) / 1000.0;
+                            {
+                                radius = MeasuringUnitsConvertor.Length.FromInchToMillimeters(radius);
+                            }
                             break;
                         }
                     case (int)swLengthUnit_e.swINCHES:
                         if (UnitSystemCombBox.Text == "IPS")
                         {
-                            radius = MeasuringUnitsConvertor.Length.FromInchToMillimeters(radius) / 1000.0;
-                            break;
+
+                            //radius = radius / 1000.0;
+
                         }
                         else
-                            radius = radius / 1000.0;
+                        {
+
+                            radius = MeasuringUnitsConvertor.Length.FromMillimetersToInchs(radius);
+
+
+                        }
                         break;
                     default:
                         break;
@@ -708,7 +724,7 @@ namespace PowerSM
                     swSheetMetalDataFeature.BendRadius = (radius * 1.0);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
                     
-                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s radius to {1} : {2}.", swFeature.Name, radius.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s radius to {1} {3} : {2}.", swFeature.Name, radius.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
 
 
                 }
@@ -723,8 +739,7 @@ namespace PowerSM
                 return Results.ToArray<string>();
 
             }
-        }
-        // Needs rework
+        }   
         private string[] ForceChangeBendZone(ModelDoc2 swModelDoc, double BendZoneValue)
         {
             List<string> Results = new List<string>();
@@ -757,6 +772,7 @@ namespace PowerSM
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
                                 // Unit checking
+
                                 if (UnitSystemCombBox.Text == "IPS")
                                     BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
                                 else
@@ -777,7 +793,8 @@ namespace PowerSM
                                 else
                                     BendZoneValue = BendZoneValue / 1000.0;
 
-                                swCustomBendAllowance.BendDeduction = BendZoneValue;
+
+                                swCustomBendAllowance.BendDeduction = BendZoneValue  ;
                                 BendZoneValue = BendZoneValue * 1000.0;
                                 break;
                             }
@@ -786,7 +803,7 @@ namespace PowerSM
 
                             swSheetMetalFeatureDataFromFolder.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalFeatureDataFromFolder, swModelDoc, null);
-                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s bend zone value to {1} : {2}.", swSheetMetalFolderFeature.Name, BendZoneValue.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s bend zone value to {1} {3} : {2}.", swSheetMetalFolderFeature.Name, BendZoneCheckedBox.Text == "KFactor" ? BendZoneValue.ToString("F2") : (swModelDoc.LengthUnit == (int)swLengthUnit_e.swINCHES ? MeasuringUnitsConvertor.Length.FromMillimetersToInchs(BendZoneValue) : BendZoneValue).ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
 
                 }
 
@@ -821,7 +838,7 @@ namespace PowerSM
                                 else
                                     BendZoneValue = BendZoneValue / 1000.0;
 
-                                swCustomBendAllowance.BendAllowance = BendZoneValue;
+                                swCustomBendAllowance.BendAllowance = BendZoneValue ;
                                 BendZoneValue = BendZoneValue * 1000.0;
                                 break;
 
@@ -843,7 +860,7 @@ namespace PowerSM
                     }
                     swSheetMetalDataFeature.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s bend zone to {1} : {2}.", swFeature.Name, BendZoneValue.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s bend zone to {1} {3} : {2}.", swFeature.Name, BendZoneCheckedBox.Text == "KFactor" ? BendZoneValue.ToString("F2") : (swModelDoc.LengthUnit == (int)swLengthUnit_e.swINCHES ? MeasuringUnitsConvertor.Length.FromMillimetersToInchs(BendZoneValue) : BendZoneValue).ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
 
 
                     #endregion
@@ -878,27 +895,36 @@ namespace PowerSM
                 int LengthUnit = swModelDoc.LengthUnit;
                 switch (LengthUnit)
                 {
-                    case (int)swLengthUnit_e.swMIL:
+                    case (int)swLengthUnit_e.swMM:
                         {
                             if (UnitSystemCombBox.Text == "MMGS")
                             {
-                            Thickness = Thickness / 1000.0;
-                            break; 
-                            }
                                 
+
+                            }
+
                             else
-                            Thickness = MeasuringUnitsConvertor.Length.FromInchToMillimeters(Thickness) / 1000.0;
+                            {
+                                Thickness = MeasuringUnitsConvertor.Length.FromInchToMillimeters(Thickness);
+                            }
+
+
                             break;
                         }
                     case (int)swLengthUnit_e.swINCHES:
                         if (UnitSystemCombBox.Text == "IPS")
                         {
-                            Thickness = MeasuringUnitsConvertor.Length.FromInchToMillimeters(Thickness) / 1000.0;
-                            break;
+
+                          
+
                         }
-                           
                         else
-                            Thickness = Thickness / 1000.0;
+                        {
+
+                            Thickness = MeasuringUnitsConvertor.Length.FromMillimetersToInchs(Thickness);
+
+
+                        }
                         break;
                     default:
                         break;
@@ -913,7 +939,7 @@ namespace PowerSM
                         continue;
                     swSheetMetalDataFeature.Thickness = Thickness;
                     bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s thickness to {1} : {2}.", swFeature.Name, Thickness.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s thickness to {1} {3} : {2} .", swFeature.Name, Thickness.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
 
 
                 }
@@ -931,7 +957,8 @@ namespace PowerSM
         }
         
         // normal mode: all changes must be done from the sheet metal folder and not the features 
-        // OK   
+         
+
         private string[] ChangeRadius(ModelDoc2 swModelDoc, double radius)
         {
 
@@ -945,33 +972,48 @@ namespace PowerSM
 
                 #region units
                 // Check unit system and convert radius to corresponding value
-                int LengthUnit = swModelDoc.LengthUnit;
+                int LengthUnit = (int)swModelDoc.LengthUnit;
+               
+
                 switch (LengthUnit)
                 {
-                    case (int)swLengthUnit_e.swMIL:
+                    case (int)swLengthUnit_e.swMM:
                         {
                             if (UnitSystemCombBox.Text == "MMGS")
                             {
-                                radius = radius / 1000.0;
-                                break;
+                                //radius = radius / 1000.0;
+                               
                             }
-                              
+
                             else
-                                radius = MeasuringUnitsConvertor.Length.FromInchToMillimeters(radius) / 1000.0;
+                            {
+                                radius = MeasuringUnitsConvertor.Length.FromInchToMillimeters(radius)  ;
+                            }
+
+
                             break;
                         }
                     case (int)swLengthUnit_e.swINCHES:
                         if (UnitSystemCombBox.Text == "IPS")
-                            break;
+                        {
+
+                            //radius = radius / 1000.0;
+
+                        }
                         else
-                            radius = MeasuringUnitsConvertor.Length.FromInchToMillimeters(radius)  / 1000.0;
+                        {
+
+                            radius = MeasuringUnitsConvertor.Length.FromMillimetersToInchs(radius);
+
+
+                        }
                         break;
                     default:
                         break;
                 }
                 #endregion
 
-               
+                     
 
                 FeatureManager swFeatureManager = swModelDoc.FeatureManager;
                 var swFeatures = swFeatureManager.GetFeatures(false);
@@ -981,10 +1023,11 @@ namespace PowerSM
                 var swSheetMetalFolder2 = new SheetMetalFolder2(swSheetMetalFolder);
 
                 bool FeatureResult = swSheetMetalFolder2.BendRadius(radius);
+            
                 if (FeatureResult)
                     swModelDoc.ForceRebuild3(true);
 
-                Results.Add(string.Format("\t *NORMAL MODE: changing {0}'s radius to {1} : {2}.", swSheetMetalFolder.GetFeature().Name, radius.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
+                Results.Add(string.Format("\t *NORMAL MODE: changing {0}'s radius to {1} {3} : {2} .", swSheetMetalFolder.GetFeature().Name, radius.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
 
 
                  
@@ -1000,7 +1043,7 @@ namespace PowerSM
 
             }
         }
-        // Needs Testing
+       
         private string[] ChangeBendZone(ModelDoc2 swModelDoc, double BendZoneValue)
         {
             List<string> Results = new List<string>();
@@ -1022,8 +1065,7 @@ namespace PowerSM
                     switch (BendZoneCheckedBox.Text)
                     {
                         #region units
-                        default:
-                            break;
+                     
                         case "KFactor":
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
@@ -1034,6 +1076,7 @@ namespace PowerSM
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
                                 // Unit checking
+
                                 if (UnitSystemCombBox.Text == "IPS")
                                     BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
                                 else
@@ -1049,22 +1092,25 @@ namespace PowerSM
                             {
                                 swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
                                 // Unit checking
+
                                 if (UnitSystemCombBox.Text == "IPS")
                                     BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
                                 else
                                     BendZoneValue = BendZoneValue / 1000.0;
+
 
                                 swCustomBendAllowance.BendDeduction = BendZoneValue;
                                 BendZoneValue = BendZoneValue * 1000.0;
                                 break;
                             }
 
-                            #endregion
-
+                        #endregion
+                        default:
+                            break;
                     }
                     swSheetMetalFeatureDataFromFolder.SetCustomBendAllowance(swCustomBendAllowance);
                     bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalFeatureDataFromFolder, swModelDoc, null);
-                    Results.Add(string.Format("\t * NORMAL MODE: Changing {0}'s bend zone to {1} : {2}.", swSheetMetalFolderFeature.Name, BendZoneValue.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
+                    Results.Add(string.Format("\t * NORMAL MODE: Changing {0}'s bend zone to {1} {3} : {2}.", swSheetMetalFolderFeature.Name, BendZoneCheckedBox.Text == "KFactor" ? BendZoneValue.ToString("F2") : (swModelDoc.LengthUnit == (int)swLengthUnit_e.swINCHES ? MeasuringUnitsConvertor.Length.FromMillimetersToInchs(BendZoneValue):BendZoneValue).ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
 
                 }
 
@@ -1078,7 +1124,7 @@ namespace PowerSM
 
             }
         }
-        // OK
+      
         private string[] ChangeThickness(ModelDoc2 swModelDoc, double Thickness)
         {
  
@@ -1092,25 +1138,35 @@ namespace PowerSM
                 int LengthUnit = swModelDoc.LengthUnit;
                 switch (LengthUnit)
                 {
-                    case (int)swLengthUnit_e.swMIL:
+                    case (int)swLengthUnit_e.swMM:
                         {
                             if (UnitSystemCombBox.Text == "MMGS")
                             {
-                                Thickness = Thickness / 1000.0;
-                                break;
+
+
                             }
+
                             else
-                                Thickness = MeasuringUnitsConvertor.Length.FromInchToMillimeters (Thickness) / 1000.0;
+                            {
+                                Thickness = MeasuringUnitsConvertor.Length.FromInchToMillimeters(Thickness);
+                            }
+
                             break;
                         }
                     case (int)swLengthUnit_e.swINCHES:
                         if (UnitSystemCombBox.Text == "IPS")
-                          {
-                            Thickness = MeasuringUnitsConvertor.Length.FromInchToMillimeters(Thickness) / 1000.0;
-                            break; }
-                            
+                        {
+
+
+
+                        }
                         else
-                            Thickness = Thickness / 1000.0 ;
+                        {
+
+                            Thickness = MeasuringUnitsConvertor.Length.FromMillimetersToInchs(Thickness);
+
+
+                        }
                         break;
                     default:
                         break;
@@ -1128,7 +1184,7 @@ namespace PowerSM
                 if (FeatureResult)
                     swModelDoc.ForceRebuild3(true);
 
-                Results.Add(string.Format("\t * NORMAL MODE: changing {0}'s thickness to {1} : {2}.", swSheetMetalFolder.GetFeature().Name, Thickness.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE"));
+                Results.Add(string.Format("\t * NORMAL MODE: changing {0}'s thickness to {1} {3} : {2} ", swSheetMetalFolder.GetFeature().Name, Thickness.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE",swModelDoc.LengthUnit == 0 ? "mm": "inch"));
                 return Results.ToArray<string>();
             }
 

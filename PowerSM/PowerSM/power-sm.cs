@@ -103,7 +103,7 @@ namespace PowerSM
             int DocType = (int)swDocumentTypes_e.swDocNONE;
             swApp.RemoveMenu(DocType, "PowerSM", "GeometryToolMethod");
             swApp.RemoveMenu(DocType, "Power Geometry Tool@PowerSM", "GeometryToolMethod");
-        //   swApp.RemoveMenu(DocType, "Power Convert Tool@PowerSM", "ConvertToolMethod");
+    
 
         }
         #endregion
