@@ -1,0 +1,6 @@
+{
+  "name": "Power-SM",
+  "tagline": "Sheet Metal Add-in For SolidWorks",
+  "body": "### Power-SM, SolidWorks Sheet Metal Addin.\r\nPower-SM ,short for Power-Sheet Metal, is C# COM Add-in for SolidWorks.\r\n\r\nThe main purpose of this add-in to perform tedious operations Sheet Metal CAD files and let mechancial design engineers focus on the design. Many engineers are faced with cumbersome tasks of modifying hundreds of CAD files especially in mass-manufacturing environment.",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
