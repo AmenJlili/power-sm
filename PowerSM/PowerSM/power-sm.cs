@@ -7,6 +7,8 @@ using SolidWorks.Interop.swpublished;
 using System.Reflection;
 using SolidWorksTools.File;
 using System.Drawing;
+using System.Windows.Forms;
+using System.Diagnostics;
 
 namespace PowerSM
 {
@@ -109,8 +111,10 @@ namespace PowerSM
         // Callback methods must be public, otherwise call from menu item fails 
         public void GeometryToolMethod()
         {
+            var swFrame = new swFrame(Process.GetProcessById(swApp.GetProcessID()).MainWindowHandle);
             var  f = new PowerGeometryForm(swApp);
-            f.ShowDialog();
+            f.StartPosition = FormStartPosition.CenterParent;
+            f.ShowDialog(swFrame);
         }
         public void ConvertToolMethod()
         {
@@ -118,7 +122,18 @@ namespace PowerSM
         }
         #endregion
 
-    } 
+    }
+
+
+    public class swFrame : IWin32Window
+    {
+        public IntPtr Handle { get; set; }
+
+        public swFrame(IntPtr handle)
+        {
+            Handle = handle;
+        }
+    }
 }
 
 
