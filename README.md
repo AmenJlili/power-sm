@@ -1,9 +1,11 @@
-#power-sm Add-in for SolidWorks
+# power-sm Add-in for SolidWorks
 
 
 <img src="preview.png"  />
+
 # Version History:
 
+- 07/22/2020: 1.3  improvements
 - 04/14/2016: 1.2  release
 - 01/20/2016: 1.1  release
 - 01/03/2016: 1.0  release
