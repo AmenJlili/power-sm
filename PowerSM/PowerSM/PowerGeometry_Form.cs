@@ -162,6 +162,8 @@ namespace PowerSM
         private void optionsToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             var powersmoptions = new PowerGeometryOptions();
+            powersmoptions.Owner = this;
+            powersmoptions.StartPosition = FormStartPosition.CenterParent;
             powersmoptions.ShowDialog();
         }
 

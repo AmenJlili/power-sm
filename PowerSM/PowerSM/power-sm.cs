@@ -10,16 +10,14 @@ using System.Drawing;
 
 namespace PowerSM
 {
+    [Guid("B2A0B714-0984-435A-A2DF-D3AA3E8E806D")]
+    [ComVisible(true)]
     public class PowerSM: SwAddin
     {
         /* Notes to developers:
-         
-        -   This was developed under .NET Framework 4.5.2 and SolidWorks API 2015 
-           The add-in is intend to be used with SolidWorks 2015 or superior
-           
-        -  For optimal results: 
-           Select the target platform to 64 bit processor under the build tab
-           Check Register for COM Interop under the build tab
+        - Make sure Embed Interop Types for the reference solidworks.interop.sldworks in the properties window is set to true.
+        -  From project properties, select the target platform to 64x under the build tab
+        -  Check Register for COM Interop under the build tab // need to run vs as admin when building
         */
 
          int AddInCookie;
@@ -95,7 +93,6 @@ namespace PowerSM
             int DocType = (int)swDocumentTypes_e.swDocNONE;
             swApp.AddMenu(DocType, "PowerSM", 1);
             swApp.AddMenuItem4(DocType, AddInCookie, "Power Geometry Tool@PowerSM", 1, "GeometryToolMethod", "3", "Power Geometry Tool", "");
-         //   swApp.AddMenuItem4(DocType, AddInCookie, "Power Convert Tool@PowerSM", 1, "ConvertToolMethod", "3", "Power Convert Tool", "");
         }
         private void DestroyMenu()
         {
