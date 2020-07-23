@@ -1,7 +1,7 @@
 #power-sm Add-in for SolidWorks
 
 
-img src="preview.png"  />
+<img src="preview.png"  />
 # Version History:
 
 - 04/14/2016: 1.2  release
