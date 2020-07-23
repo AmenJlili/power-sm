@@ -16,22 +16,14 @@
 
 # About:
 
-Power-SM ,short for Power-Sheet Metal, is C# COM Add-in for SolidWorks.
+Power-SM is a sheet metal add-in for SOLIDWORKS.
 
 <p align="justify">The main purpose of this add-in to perform tedious operations Sheet Metal CAD files and let mechancial design engineers focus on the design.
 
 Many engineers are faced with cumbersome tasks of modifying hundreds of CAD files especially in mass-manufacturing environment.</p>
 
-The main functionalities will allow users to:
-
-- PowerGeometry Tool: Change radius, kfactor and thickness
+The main functionalities will allow users to change radius, kfactor and thickness of an entire sheet metal part.
 
 
 
-# Notes to developers
 
-<p align="justify">You need SolidWorks interop assemblies to build. More information on where to find them <a href="http://help.solidworks.com/2015/English/api/sldworksapiprogguide/Welcome.htm"> here</a>. The recommended solidworks assemblies can be found at this directory (install_dir\api\redist)</p>
-
-# Notes to "hungry" end-users
-
-If you are looking to install this add-in on the fly, a <strike>installshield</strike> windows msi deployer will linked <strike>here in the future</strike> in the history version section.
