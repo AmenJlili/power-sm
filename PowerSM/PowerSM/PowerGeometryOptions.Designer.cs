@@ -37,6 +37,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.ForceMode = new System.Windows.Forms.CheckBox();
             this.SaveOptionsButton = new System.Windows.Forms.Button();
+            this.CancelOptionsButton = new System.Windows.Forms.Button();
             this.helpProvider1 = new System.Windows.Forms.HelpProvider();
             this.groupBox1.SuspendLayout();
             this.SuspendLayout();
@@ -57,9 +58,9 @@
             this.ArchiveInZipFormatCheckBox.AutoSize = true;
             this.ArchiveInZipFormatCheckBox.Location = new System.Drawing.Point(17, 155);
             this.ArchiveInZipFormatCheckBox.Name = "ArchiveInZipFormatCheckBox";
-            this.ArchiveInZipFormatCheckBox.Size = new System.Drawing.Size(142, 17);
+            this.ArchiveInZipFormatCheckBox.Size = new System.Drawing.Size(298, 17);
             this.ArchiveInZipFormatCheckBox.TabIndex = 1;
-            this.ArchiveInZipFormatCheckBox.Text = "Archive files in zip format";
+            this.ArchiveInZipFormatCheckBox.Text = "Archive files in zip format (requires an output folder)";
             this.ArchiveInZipFormatCheckBox.UseVisualStyleBackColor = true;
             // 
             // groupBox1
@@ -72,7 +73,7 @@
             this.groupBox1.Controls.Add(this.ArchiveInZipFormatCheckBox);
             this.groupBox1.Location = new System.Drawing.Point(12, 12);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(555, 200);
+            this.groupBox1.Size = new System.Drawing.Size(555, 186);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Options";
@@ -90,7 +91,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.ForeColor = System.Drawing.SystemColors.ControlDark;
+            this.label2.ForeColor = System.Drawing.SystemColors.GrayText;
             this.label2.Location = new System.Drawing.Point(34, 86);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(449, 39);
@@ -100,7 +101,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.ForeColor = System.Drawing.SystemColors.ControlDark;
+            this.label1.ForeColor = System.Drawing.SystemColors.GrayText;
             this.label1.Location = new System.Drawing.Point(34, 39);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(428, 26);
@@ -122,7 +123,7 @@
             // 
             // SaveOptionsButton
             // 
-            this.SaveOptionsButton.Location = new System.Drawing.Point(473, 243);
+            this.SaveOptionsButton.Location = new System.Drawing.Point(373, 210);
             this.SaveOptionsButton.Name = "SaveOptionsButton";
             this.SaveOptionsButton.Size = new System.Drawing.Size(94, 27);
             this.SaveOptionsButton.TabIndex = 3;
@@ -130,20 +131,34 @@
             this.SaveOptionsButton.UseVisualStyleBackColor = true;
             this.SaveOptionsButton.Click += new System.EventHandler(this.SaveOptionsButton_Click);
             // 
+            // CancelOptionsButton
+            // 
+            this.CancelOptionsButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+            this.CancelOptionsButton.Location = new System.Drawing.Point(473, 210);
+            this.CancelOptionsButton.Name = "CancelOptionsButton";
+            this.CancelOptionsButton.Size = new System.Drawing.Size(94, 27);
+            this.CancelOptionsButton.TabIndex = 4;
+            this.CancelOptionsButton.Text = "Cancel";
+            this.CancelOptionsButton.UseVisualStyleBackColor = true;
+            // 
             // PowerGeometryOptions
             // 
+            this.AcceptButton = this.SaveOptionsButton;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(579, 282);
+            this.CancelButton = this.CancelOptionsButton;
+            this.ClientSize = new System.Drawing.Size(579, 249);
+            this.Controls.Add(this.CancelOptionsButton);
             this.Controls.Add(this.SaveOptionsButton);
             this.Controls.Add(this.groupBox1);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "PowerGeometryOptions";
             this.ShowIcon = false;
             this.ShowInTaskbar = false;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Power Geometry Options";
             this.Load += new System.EventHandler(this.powersmoptions_Load);
             this.groupBox1.ResumeLayout(false);
@@ -158,6 +173,7 @@
         private System.Windows.Forms.CheckBox ArchiveInZipFormatCheckBox;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Button SaveOptionsButton;
+        private System.Windows.Forms.Button CancelOptionsButton;
         private System.Windows.Forms.HelpProvider helpProvider1;
         private System.Windows.Forms.CheckBox ForceMode;
         private System.Windows.Forms.CheckBox SetOverrideToFalse;

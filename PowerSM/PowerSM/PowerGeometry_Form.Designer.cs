@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(PowerGeometryForm));
             this.BrowseForFolderButton = new System.Windows.Forms.Button();
             this.FilesTreeGroupBox = new System.Windows.Forms.GroupBox();
@@ -46,6 +47,8 @@
             this._ProgressBar = new System.Windows.Forms.ProgressBar();
             this.statusStrip = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.OutputStatusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.toolTip = new System.Windows.Forms.ToolTip(this.components);
             this.StartButton = new System.Windows.Forms.Button();
             this.SaveLog = new System.Windows.Forms.Button();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
@@ -102,12 +105,12 @@
             this.FilesTreeView.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.FilesTreeView.CheckBoxes = true;
             this.FilesTreeView.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.FilesTreeView.HideSelection = false;
             this.FilesTreeView.Location = new System.Drawing.Point(3, 16);
             this.FilesTreeView.Name = "FilesTreeView";
             this.FilesTreeView.Size = new System.Drawing.Size(475, 220);
             this.FilesTreeView.TabIndex = 0;
             this.FilesTreeView.AfterCheck += new System.Windows.Forms.TreeViewEventHandler(this.FilesTreeView_AfterCheck);
-            this.FilesTreeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.FilesTreeView_AfterSelect);
             // 
             // SheetMetalDataGroupBox
             // 
@@ -130,6 +133,7 @@
             // 
             // BendZoneCheckedBox
             // 
+            this.BendZoneCheckedBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.BendZoneCheckedBox.FormattingEnabled = true;
             this.BendZoneCheckedBox.Items.AddRange(new object[] {
             "KFactor",
@@ -139,7 +143,6 @@
             this.BendZoneCheckedBox.Name = "BendZoneCheckedBox";
             this.BendZoneCheckedBox.Size = new System.Drawing.Size(113, 21);
             this.BendZoneCheckedBox.TabIndex = 10;
-            this.BendZoneCheckedBox.Text = "KFactor";
             // 
             // label3
             // 
@@ -159,10 +162,10 @@
             // 
             // BendZoneValue
             // 
-            this.BendZoneValue.AutoSize = true;
-            this.BendZoneValue.Location = new System.Drawing.Point(3, 73);
+            this.BendZoneValue.Location = new System.Drawing.Point(2, 73);
             this.BendZoneValue.Name = "BendZoneValue";
-            this.BendZoneValue.Size = new System.Drawing.Size(93, 13);
+            this.BendZoneValue.Size = new System.Drawing.Size(104, 13);
+            this.BendZoneValue.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.BendZoneValue.TabIndex = 7;
             this.BendZoneValue.Text = "Bend Zone Value:";
             // 
@@ -175,19 +178,19 @@
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(6, 45);
+            this.label1.Location = new System.Drawing.Point(2, 45);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(89, 13);
+            this.label1.Size = new System.Drawing.Size(104, 13);
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.label1.TabIndex = 5;
             this.label1.Text = "Thickness Value:";
             // 
             // NewRadiusLabel
             // 
-            this.NewRadiusLabel.AutoSize = true;
-            this.NewRadiusLabel.Location = new System.Drawing.Point(22, 18);
+            this.NewRadiusLabel.Location = new System.Drawing.Point(2, 18);
             this.NewRadiusLabel.Name = "NewRadiusLabel";
-            this.NewRadiusLabel.Size = new System.Drawing.Size(73, 13);
+            this.NewRadiusLabel.Size = new System.Drawing.Size(104, 13);
+            this.NewRadiusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             this.NewRadiusLabel.TabIndex = 4;
             this.NewRadiusLabel.Text = "Radius Value:";
             // 
@@ -202,6 +205,7 @@
             // 
             // UnitSystemCombBox
             // 
+            this.UnitSystemCombBox.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.UnitSystemCombBox.FormattingEnabled = true;
             this.UnitSystemCombBox.Items.AddRange(new object[] {
             "MMGS",
@@ -210,7 +214,6 @@
             this.UnitSystemCombBox.Name = "UnitSystemCombBox";
             this.UnitSystemCombBox.Size = new System.Drawing.Size(113, 21);
             this.UnitSystemCombBox.TabIndex = 1;
-            this.UnitSystemCombBox.Text = "MMGS";
             // 
             // RadiusTextBox
             // 
@@ -230,7 +233,8 @@
             // 
             this.statusStrip.Dock = System.Windows.Forms.DockStyle.None;
             this.statusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripStatusLabel});
+            this.toolStripStatusLabel,
+            this.OutputStatusLabel});
             this.statusStrip.Location = new System.Drawing.Point(0, 0);
             this.statusStrip.Name = "statusStrip";
             this.statusStrip.Size = new System.Drawing.Size(502, 22);
@@ -243,6 +247,14 @@
             this.toolStripStatusLabel.Name = "toolStripStatusLabel";
             this.toolStripStatusLabel.Size = new System.Drawing.Size(38, 17);
             this.toolStripStatusLabel.Text = "Ready";
+            // 
+            // OutputStatusLabel
+            // 
+            this.OutputStatusLabel.Name = "OutputStatusLabel";
+            this.OutputStatusLabel.Size = new System.Drawing.Size(449, 17);
+            this.OutputStatusLabel.Spring = true;
+            this.OutputStatusLabel.Text = "Output: save in place";
+            this.OutputStatusLabel.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // StartButton
             // 
@@ -286,7 +298,6 @@
             this.recentDirectoryToolStripMenuItem,
             this.RecentToolStripMenu});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
-            this.fileToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Alt | System.Windows.Forms.Keys.F4)));
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(35, 20);
             this.fileToolStripMenuItem.Text = "File";
             // 
@@ -326,7 +337,7 @@
             this.selectAllToolStripMenuItem.Name = "selectAllToolStripMenuItem";
             this.selectAllToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.A)));
             this.selectAllToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
-            this.selectAllToolStripMenuItem.Text = "Select All ";
+            this.selectAllToolStripMenuItem.Text = "Select All";
             this.selectAllToolStripMenuItem.Click += new System.EventHandler(this.selectAllToolStripMenuItem_Click);
             // 
             // unSelectAllToolStripMenuItem
@@ -335,7 +346,7 @@
             this.unSelectAllToolStripMenuItem.ShortcutKeys = ((System.Windows.Forms.Keys)(((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.Shift) 
             | System.Windows.Forms.Keys.A)));
             this.unSelectAllToolStripMenuItem.Size = new System.Drawing.Size(199, 22);
-            this.unSelectAllToolStripMenuItem.Text = "UnSelect All";
+            this.unSelectAllToolStripMenuItem.Text = "Unselect All";
             this.unSelectAllToolStripMenuItem.Click += new System.EventHandler(this.unSelectAllToolStripMenuItem_Click);
             // 
             // optionsToolStripMenuItem
@@ -360,16 +371,15 @@
             this.helpToolStripMenuItem1,
             this.aboutThisToolToolStripMenuItem});
             this.helpToolStripMenuItem.Name = "helpToolStripMenuItem";
-            this.helpToolStripMenuItem.ShortcutKeys = System.Windows.Forms.Keys.F1;
             this.helpToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
-            this.helpToolStripMenuItem.Text = "About";
+            this.helpToolStripMenuItem.Text = "Help";
             // 
             // helpToolStripMenuItem1
             // 
             this.helpToolStripMenuItem1.Name = "helpToolStripMenuItem1";
-            this.helpToolStripMenuItem1.ShortcutKeys = ((System.Windows.Forms.Keys)((System.Windows.Forms.Keys.Control | System.Windows.Forms.Keys.F1)));
+            this.helpToolStripMenuItem1.ShortcutKeys = System.Windows.Forms.Keys.F1;
             this.helpToolStripMenuItem1.Size = new System.Drawing.Size(150, 22);
-            this.helpToolStripMenuItem1.Text = "Help";
+            this.helpToolStripMenuItem1.Text = "Online Help";
             this.helpToolStripMenuItem1.Click += new System.EventHandler(this.helpToolStripMenuItem1_Click);
             // 
             // aboutThisToolToolStripMenuItem
@@ -440,13 +450,17 @@
             this.LogGroupBox.Size = new System.Drawing.Size(477, 101);
             this.LogGroupBox.TabIndex = 7;
             this.LogGroupBox.TabStop = false;
-            this.LogGroupBox.Text = "Output";
+            this.LogGroupBox.Text = "Log";
             // 
             // LogTextBox
             // 
             this.LogTextBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.LogTextBox.Location = new System.Drawing.Point(3, 16);
+            this.LogTextBox.BackColor = System.Drawing.SystemColors.Window;
             this.LogTextBox.Multiline = true;
+            this.LogTextBox.ReadOnly = true;
+            this.LogTextBox.ScrollBars = System.Windows.Forms.ScrollBars.Both;
+            this.LogTextBox.WordWrap = false;
             this.LogTextBox.Name = "LogTextBox";
             this.LogTextBox.Size = new System.Drawing.Size(471, 82);
             this.LogTextBox.TabIndex = 0;
@@ -463,6 +477,7 @@
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "PowerGeometryForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "Power Geometry Tool";
             this.Activated += new System.EventHandler(this.PowerGeometryForm_Activated);
@@ -525,5 +540,7 @@
         private System.Windows.Forms.ToolStripMenuItem recentDirectoryToolStripMenuItem;
         private System.Windows.Forms.ComboBox BendZoneCheckedBox;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.ToolStripStatusLabel OutputStatusLabel;
+        private System.Windows.Forms.ToolTip toolTip;
     }
 }

@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PowerSM
@@ -19,58 +12,36 @@ namespace PowerSM
 
         private void powersmoptions_Load(object sender, EventArgs e)
         {
-           ForceDimensionalRespectCheckBox.Checked = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ForceDimensionalRespect"]);
-           ArchiveInZipFormatCheckBox.Checked = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]);
-           ForceMode.Checked = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["Force"]);
-
-
-            if (ForceMode.Checked == true)
-            {
-                SetOverrideToFalse.Checked = false;
-                System.Configuration.ConfigurationSettings.AppSettings["SetOverrideToFalse"] = "False";
-                SetOverrideToFalse.Enabled = false;
-            }
-            else
-            {
-                SetOverrideToFalse.Enabled = true;
-                SetOverrideToFalse.Checked = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["SetOverrideToFalse"]);
-            }
+            ForceDimensionalRespectCheckBox.Checked = PowerSMSettings.ForceDimensionalRespect;
+            ArchiveInZipFormatCheckBox.Checked = PowerSMSettings.ArchiveInZipFormat;
+            ForceMode.Checked = PowerSMSettings.ForceMode;
+            SetOverrideToFalse.Checked = !ForceMode.Checked && PowerSMSettings.SetOverrideToFalse;
+            UpdateOverrideCheckBox();
         }
 
         private void SaveOptionsButton_Click(object sender, EventArgs e)
         {
-            System.Configuration.ConfigurationSettings.AppSettings["ForceDimensionalRespect"] = ForceDimensionalRespectCheckBox.Checked.ToString();
-            System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"] = ArchiveInZipFormatCheckBox.Checked.ToString();
-            System.Configuration.ConfigurationSettings.AppSettings["Force"] = ForceMode.Checked.ToString();
-            if ( ForceMode.Checked == true )
-            {
-                SetOverrideToFalse.Checked = false; 
-                System.Configuration.ConfigurationSettings.AppSettings["SetOverrideToFalse"] = "False";
-                SetOverrideToFalse.Enabled = false; 
-            }
-            else
-            {
-                SetOverrideToFalse.Enabled = true;
-                System.Configuration.ConfigurationSettings.AppSettings["SetOverrideToFalse"] = SetOverrideToFalse.Checked.ToString();
-            }
- 
+            PowerSMSettings.ForceDimensionalRespect = ForceDimensionalRespectCheckBox.Checked;
+            PowerSMSettings.ArchiveInZipFormat = ArchiveInZipFormatCheckBox.Checked;
+            PowerSMSettings.ForceMode = ForceMode.Checked;
+            // "Inherit from parent" only applies in normal mode.
+            PowerSMSettings.SetOverrideToFalse = !ForceMode.Checked && SetOverrideToFalse.Checked;
+            PowerSMSettings.Save();
 
-      
-            this.Close();
+            DialogResult = DialogResult.OK;
+            Close();
         }
 
         private void ForceMode_CheckedChanged(object sender, EventArgs e)
         {
-            if (ForceMode.Checked == true)
-            {
-                SetOverrideToFalse.Enabled = false;
+            UpdateOverrideCheckBox();
+        }
 
-            }
-            else
-            {
-                SetOverrideToFalse.Enabled = true;
-            }
-
+        private void UpdateOverrideCheckBox()
+        {
+            SetOverrideToFalse.Enabled = !ForceMode.Checked;
+            if (ForceMode.Checked)
+                SetOverrideToFalse.Checked = false;
         }
     }
 }

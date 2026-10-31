@@ -1,0 +1,81 @@
+10/30/2026: release 1.5
+Fixed: Values are now converted to SOLIDWORKS system units (meters) from the
+       unit system picked in the tool, whatever the part's own units are.
+       Inch parts and Force mode radius / thickness were written with wrong values.
+Fixed: Bend allowance / bend deduction values above 1 were rejected.
+Fixed: IPS bend allowance / deduction was converted again for every feature in Force mode.
+Fixed: Options and recent directory are now saved between SOLIDWORKS sessions
+       (%APPDATA%\Blue Byte\PowerSM\settings.xml).
+Fixed: Parts with upper/lower case extensions (.SldPrt) are now listed; ~$ temp files are skipped.
+Fixed: Folders that cannot be read no longer crash the files tree.
+Fixed: Each part is closed after processing; parts the user already had open stay open.
+Fixed: Errors while changing a feature are now written to the log instead of being hidden.
+Fixed: 'Inherit from parent' option now sets hems and bend reliefs to use their defaults.
+Fixed: Zip archive uses the Windows temp folder instead of C:\Temp.
+Fixed: UI no longer accessed from the background thread while processing.
+Enhanced: Unit labels (mm / in) next to each value; unit and bend zone lists are pick-only.
+Enhanced: Read-only, scrollable log with proper line breaks; Save Log suggests a file name.
+Enhanced: Output folder shown in the status bar (right-click the button to clear it).
+Enhanced: Progress shows the part being processed; controls locked while running.
+Enhanced: Options dialog has OK / Cancel.
+Removed: Unused MetroFramework and SolidWorksTools dependencies.
+
+6/15/2016: release 1.4
+Fixed: IPS/MMGS unit conversion
+
+5/10/2016: release 1.3
+
+Added: Force all features to inherit from parent features (Option):
+       This option is only accessible when the Force mode is unchecked. 
+       This will set any overriding data to false. It will re-etablish parameter
+       inheritance between features and their parent Sheet Metal features and 
+       between the Sheet Metal features and the Sheet Metal folder.
+
+4/14/2016: release 1.2
+Added: Conversion Modes (Normal and Force). Modes are found Tools > Options
+
+       Normal mode: Changes will only affect the Sheet Metal Folder.
+                    If parameters of subfeatures are not overridden,
+                    said changes will propagate through all features
+                   
+                    Normal does not take into account part geometry
+                    conversion option when bend is set to outside on edge flanges.
+
+       Force mode: All parameters of all features will be overridden.
+                   Changes will propagate through all features.
+                   This is NOT recommended!
+
+
+Added: Bend Allowance and Bend Deduction functionnality
+Fixed: Using IPS units is now bug-free
+Enhanced: Better UI naming.
+
+01/30/2016: release 1.1
+Added: Recent directory under file
+Fixed: K-factor on Sheet Metal Folder
+Enhanced: Start button is disabled when process is begun.
+
+01/20/2016: release 1.1
+
+Enhanced: Power Radius Tool is now called PowerGeomtry englobing kfactor, radius, thickness feature
+Added: Archive directory as zip
+Added: Save to directory
+Added: Option to conserve part geometry when bend position is set to outside on edge flanges
+Added: Ability to change kfactor
+Added: Ability to change thickness
+
+
+01/03/2016: release 1.0 (stable)
+
+Added: New deployement interface using Inno-setup
+Fixed setup powerdll registry issue
+Fixed Select All / Unselect All bugs on start-up
+31/12/2015: pre-release 1.0a:
+
+Added: support for IPS unit system
+Added: check-able treeview files
+Added: select/unselect under edit menu (new menu item)
+Added: Open file folder button
+Fixed: time-stamp bug in logger
+Fixed: Will override default radius of sharp bends when dealing with convert solid to metal features
+Fixed: Improved UI text label text

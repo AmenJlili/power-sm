@@ -1,31 +1,38 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Windows.Forms;
 using Microsoft.Win32;
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
 using SolidWorks.Interop.swpublished;
-using System.Reflection;
-using SolidWorksTools.File;
-using System.Drawing;
-using System.Windows.Forms;
-using System.Diagnostics;
 
 namespace PowerSM
 {
     [Guid("B2A0B714-0984-435A-A2DF-D3AA3E8E806D")]
     [ComVisible(true)]
-    public class PowerSM: SwAddin
+    public class PowerSM : SwAddin
     {
         /* Notes to developers:
-        - Make sure Embed Interop Types for the reference solidworks.interop.sldworks in the properties window is set to true.
-        -  From project properties, select the target platform to 64x under the build tab
-        -  Check Register for COM Interop under the build tab // need to run vs as admin when building
-        */
+         * - Embed Interop Types must be true for SolidWorks.Interop.sldworks.
+         * - Build for x64 (Release|x64 or the x64 platform target).
+         * - "Register for COM interop" requires Visual Studio to run as administrator.
+         *   The installer registers the add-in with RegAsm /codebase instead.
+         */
 
-         int AddInCookie;
-         SldWorks swApp;
+        private const string MenuName = "PowerSM";
+        private const string GeometryToolMenuItem = "Power Geometry Tool@PowerSM";
+        private const string AddInTitle = "Power-SM";
+        private const string AddInDescription = "SolidWorks Add-in for Sheet Metal";
 
-        #region Connect To SolidWorks 
+        private int AddInCookie;
+        private SldWorks swApp;
+
+        #region Connect To SolidWorks
+
         public bool ConnectToSW(object swAppObj, int SessionCookie)
         {
             swApp = (SldWorks)swAppObj;
@@ -38,93 +45,99 @@ namespace PowerSM
         public bool DisconnectFromSW()
         {
             DestroyMenu();
+            swApp = null;
             GC.Collect();
+            GC.WaitForPendingFinalizers();
             return true;
         }
+
         #endregion
 
-        #region COMRegistration
+        #region COM Registration
 
-        [ComRegisterFunction()]
+        private static string AddInKeyPath(Type t)
+        {
+            return string.Format(@"SOFTWARE\SolidWorks\AddIns\{0:b}", t.GUID);
+        }
+
+        [ComRegisterFunction]
         private static void RegisterAssembly(Type t)
         {
-            string KeyPath = string.Format(@"SOFTWARE\SolidWorks\AddIns\{0:b}", t.GUID);
-            RegistryKey rk = Registry.LocalMachine.CreateSubKey(KeyPath);
-            rk.SetValue(null, 1); // 1: Add-in will load at start-up
-            rk.SetValue("Title", "Power-SM"); // Title
-            rk.SetValue("Description", "SolidWorks Add-in for Sheet Metal"); // Description
+            using (var rk = Registry.LocalMachine.CreateSubKey(AddInKeyPath(t)))
+            {
+                rk.SetValue(null, 1); // 1: add-in loads at start-up
+                rk.SetValue("Title", AddInTitle);
+                rk.SetValue("Description", AddInDescription);
 
-#region Bitmap handling region
-            BitmapHandler iBmp = new BitmapHandler();
-
-            Assembly thisAssembly;
-
-            thisAssembly = System.Reflection.Assembly.GetExecutingAssembly();
-
-            var rm = new System.Resources.ResourceManager("PowerSM.Properties.Resources", System.Reflection.Assembly.GetExecutingAssembly());
-            Bitmap add_in = (Bitmap)rm.GetObject("add_icon");
-           
-            // Copy the bitmap to a suitable permanent location with a meaningful filename 
-
-            String addInPath = System.IO.Path.GetDirectoryName(thisAssembly.Location);
-            String iconPath = System.IO.Path.Combine(addInPath, "add_icon.bmp");
-            add_in.Save(iconPath);
-         
-
-
-            #endregion
-            // Register the icon location 
-            rk.SetValue("Icon Path", iconPath);
-
-            
+                // Write the add-in icon next to the assembly and register its location
+                try
+                {
+                    var assembly = Assembly.GetExecutingAssembly();
+                    var rm = new System.Resources.ResourceManager("PowerSM.Properties.Resources", assembly);
+                    using (var icon = (Bitmap)rm.GetObject("add_icon"))
+                    {
+                        var iconPath = Path.Combine(Path.GetDirectoryName(assembly.Location), "add_icon.bmp");
+                        icon.Save(iconPath);
+                        rk.SetValue("Icon Path", iconPath);
+                    }
+                }
+                catch (Exception)
+                {
+                    // The icon is cosmetic; never fail registration because of it.
+                }
+            }
         }
 
-        [ComUnregisterFunction()]
+        [ComUnregisterFunction]
         private static void UnRegisterAssembly(Type t)
         {
-            string KeyPath = string.Format(@"Software\SolidWorks\Addins\{0:b}", t.GUID);
-            Registry.LocalMachine.DeleteSubKey(KeyPath);
+            Registry.LocalMachine.DeleteSubKey(AddInKeyPath(t), false);
         }
-        
-        #endregion      
-    
-        #region UIMethod
+
+        #endregion
+
+        #region UI Methods
+
         private void BuildMenu()
         {
-           
-            int DocType = (int)swDocumentTypes_e.swDocNONE;
-            swApp.AddMenu(DocType, "PowerSM", 1);
-            swApp.AddMenuItem4(DocType, AddInCookie, "Power Geometry Tool@PowerSM", 1, "GeometryToolMethod", "3", "Power Geometry Tool", "");
+            var docType = (int)swDocumentTypes_e.swDocNONE;
+            swApp.AddMenu(docType, MenuName, 1);
+            swApp.AddMenuItem4(docType, AddInCookie, GeometryToolMenuItem, 1, "GeometryToolMethod", "3", "Power Geometry Tool", "");
         }
+
         private void DestroyMenu()
         {
-          
-            int DocType = (int)swDocumentTypes_e.swDocNONE;
-            swApp.RemoveMenu(DocType, "PowerSM", "GeometryToolMethod");
-            swApp.RemoveMenu(DocType, "Power Geometry Tool@PowerSM", "GeometryToolMethod");
-    
-
+            var docType = (int)swDocumentTypes_e.swDocNONE;
+            swApp.RemoveMenu(docType, GeometryToolMenuItem, "GeometryToolMethod");
+            swApp.RemoveMenu(docType, MenuName, "");
         }
+
         #endregion
 
         #region Add-in Implementation
-        // Callback methods must be public, otherwise call from menu item fails 
+
+        // Callback methods must be public, otherwise the call from the menu item fails.
         public void GeometryToolMethod()
         {
-            var swFrame = new swFrame(Process.GetProcessById(swApp.GetProcessID()).MainWindowHandle);
-            var  f = new PowerGeometryForm(swApp);
-            f.StartPosition = FormStartPosition.CenterParent;
-            f.ShowDialog(swFrame);
+            try
+            {
+                var owner = new swFrame(Process.GetProcessById(swApp.GetProcessID()).MainWindowHandle);
+                using (var form = new PowerGeometryForm(swApp))
+                {
+                    form.StartPosition = FormStartPosition.CenterParent;
+                    form.ShowDialog(owner);
+                }
+            }
+            catch (Exception exception)
+            {
+                MessageBox.Show(exception.Message, "Power-SM", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
-        public void ConvertToolMethod()
-        {
-           
-        }
-        #endregion
 
+        #endregion
     }
 
-
+    /// <summary>Wraps the SOLIDWORKS main window handle so dialogs can be centered on it.</summary>
     public class swFrame : IWin32Window
     {
         public IntPtr Handle { get; set; }
@@ -135,5 +148,3 @@ namespace PowerSM
         }
     }
 }
-
-

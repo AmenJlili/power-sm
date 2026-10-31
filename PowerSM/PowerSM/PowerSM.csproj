@@ -36,18 +36,6 @@
     <ApplicationIcon>psm.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MetroFramework, Version=1.2.0.3, Culture=neutral, PublicKeyToken=5f91a84759bf584a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MetroFramework.RunTime.1.2.0.3\lib\net40-Client\MetroFramework.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="MetroFramework.Design, Version=1.2.0.3, Culture=neutral, PublicKeyToken=5f91a84759bf584a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MetroFramework.Design.1.2.0.3\lib\net40\MetroFramework.Design.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="MetroFramework.Fonts, Version=1.2.0.3, Culture=neutral, PublicKeyToken=5f91a84759bf584a, processorArchitecture=MSIL">
-      <HintPath>..\packages\MetroFramework.Fonts.1.2.0.3\lib\net40\MetroFramework.Fonts.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="SolidWorks.Interop.sldworks, Version=28.2.0.64, Culture=neutral, PublicKeyToken=7c4797c3e4eeac03, processorArchitecture=MSIL">
       <HintPath>..\packages\BlueByte.SOLIDWORKS.Interops.2020.2.0\lib\SolidWorks.Interop.sldworks.dll</HintPath>
       <EmbedInteropTypes>True</EmbedInteropTypes>
@@ -63,9 +51,6 @@
     <Reference Include="SolidWorks.Interop.swpublished, Version=28.2.0.64, Culture=neutral, PublicKeyToken=89a97bdc5284e6d8, processorArchitecture=MSIL">
       <HintPath>..\packages\BlueByte.SOLIDWORKS.Interops.2020.2.0\lib\SolidWorks.Interop.swpublished.dll</HintPath>
       <EmbedInteropTypes>False</EmbedInteropTypes>
-    </Reference>
-    <Reference Include="solidworkstools, Version=2.0.0.0, Culture=neutral, PublicKeyToken=bd18593873b4686d, processorArchitecture=MSIL">
-      <HintPath>..\packages\CADSharp.SolidWorksTools.2018.0.0\lib\solidworkstools.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -96,13 +81,12 @@
       <DependentUpon>PowerGeometry_Form.cs</DependentUpon>
     </Compile>
     <Compile Include="PowerSMEnums.cs" />
+    <Compile Include="PowerSMSettings.cs" />
     <Compile Include="PowerGeometryOptions.cs">
       <SubType>Form</SubType>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="PowerGeometryOptions.Designer.cs">
       <DependentUpon>PowerGeometryOptions.cs</DependentUpon>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
@@ -121,7 +105,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="PowerGeometryOptions.resx">
       <DependentUpon>PowerGeometryOptions.cs</DependentUpon>
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -143,18 +126,6 @@
     <None Include="Resources\folder_png.png" />
   </ItemGroup>
   <ItemGroup>
-    <COMReference Include="FeatureWorks">
-      <Guid>{7CF8CA03-1DCE-11D1-A89B-0020AF351FA9}</Guid>
-      <VersionMajor>1</VersionMajor>
-      <VersionMinor>0</VersionMinor>
-      <Lcid>0</Lcid>
-      <WrapperTool>tlbimp</WrapperTool>
-      <Isolated>False</Isolated>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-    </COMReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="MetroFramework.txt" />
     <Content Include="psm.ico" />
     <None Include="Resources\add_icon.bmp" />
   </ItemGroup>

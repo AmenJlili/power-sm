@@ -1,309 +1,481 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Globalization;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using SolidWorks.Interop.sldworks;
 using SolidWorks.Interop.swconst;
-using System.IO;
-using System.IO.Compression;
-using System.Globalization;
+
 namespace PowerSM
 {
     public partial class PowerGeometryForm : Form
     {
+        #region Constants
 
-        string CurrentDirectory;
-        string OutputDirectory;
-        SldWorks swApp;
-        List<CustomTreeNode> AllTreeViewNodes;
-        List<string> swSheetMetalFeatureTypeWithRadiusProperty;
-        List<string> swSheetMetalFeatureTypeWithThicknessProperty;
-        List<string> swSheetMetalFeatureTypeWithKFactorProperty;
-        delegate bool del(SldWorks swApp, string filename, double radius);
+        private const string BendZoneKFactor = "KFactor";
+        private const string BendZoneAllowance = "Bend Allowance";
+        private const string BendZoneDeduction = "Bend Deduction";
+        private const string ArchiveFileName = "powersm.zip";
+        private const string HelpUrl = "https://github.com/AmenJlili/power-sm/wiki/PowerGeometry";
+        private const string PartExtension = ".sldprt";
+
+        // Feature type names (Feature.GetTypeName) that expose each sheet metal parameter.
+        private static readonly string[] FeatureTypesWithRadius =
+            { "SMBaseFlange", "EdgeFlange", "SketchBend", "SheetMetal", "OneBend", "SMMiteredFlange", "Jog", "ProcessBends" };
+
+        private static readonly string[] FeatureTypesWithKFactor =
+            { "EdgeFlange", "SheetMetal", "OneBend", "Hem", "SMMiteredFlange", "Jog", "Bends" };
+
+        private static readonly string[] FeatureTypesWithThickness =
+            { "SMBaseFlange", "LoftedBends", "SheetMetal", "OneBend" };
+
+        // Feature type names (Feature.GetTypeName2) that can inherit radius / bend allowance from their parent.
+        private static readonly string[] FeatureTypesInheritingBendParameters =
+            { "EdgeFlange", "SM3dBend", "SketchBend", "OneBend", "SMMiteredFlange", "Jog", "Bends", "ProcessBends", "FlattenBends" };
+
+        private static readonly string[] FeatureTypesWithBendRelief =
+            { "EdgeFlange", "OneBend", "SketchBend" };
+
+        #endregion
+
+        private readonly SldWorks swApp;
+        private string CurrentDirectory;
+        private string OutputDirectory;
+        private List<CustomTreeNode> AllTreeViewNodes = new List<CustomTreeNode>();
+        private bool isRunning;
+
+        private static string TempArchiveFolder
+        {
+            get { return Path.Combine(Path.GetTempPath(), "PowerSM"); }
+        }
+
+        /// <summary>Snapshot of everything a run needs, taken on the UI thread before work starts.</summary>
+        private sealed class RunSettings
+        {
+            public string UnitSystem;
+            public string BendZoneType;
+            public double RadiusMeters;
+            public double ThicknessMeters;
+            /// <summary>K-factor (unitless) or bend allowance / deduction in meters.</summary>
+            public double BendZoneValue;
+            public bool Force;
+            public bool SetOverrideToFalse;
+            public bool ForceDimensionalRespect;
+            public bool Archive;
+            public string OutputDirectory;
+
+            public bool HasRadius { get { return RadiusMeters > 0; } }
+            public bool HasThickness { get { return ThicknessMeters > 0; } }
+            public bool HasBendZone { get { return BendZoneValue > 0; } }
+            public bool ArchiveToZip { get { return Archive && !string.IsNullOrEmpty(OutputDirectory); } }
+        }
+
+        private sealed class PartJob
+        {
+            public string FullFilePath;
+            public string RelativePath;
+        }
 
         public PowerGeometryForm(SldWorks swApp_)
         {
             InitializeComponent();
             swApp = swApp_;
+
+            UnitSystemCombBox.SelectedIndexChanged += (s, e) => UpdateUnitLabels();
+            BendZoneCheckedBox.SelectedIndexChanged += (s, e) => UpdateUnitLabels();
+            FormClosing += PowerGeometryForm_FormClosing;
         }
 
         private void Power_SM_Form_Load(object sender, EventArgs e)
-        {   
-            // Load icons for tree view 
-            var rm = new System.Resources.ResourceManager("PowerSM.Properties.Resources", System.Reflection.Assembly.GetExecutingAssembly());
-            Bitmap part = (Bitmap)rm.GetObject("part_png");
-            Bitmap folder = (Bitmap)rm.GetObject("folder_png");
-
-            FilesTreeView.ImageList = new ImageList();
-
-            FilesTreeView.ImageList.Images.Add(part);
-            FilesTreeView.ImageList.Images.Add(folder);
-          
-            swSheetMetalFeatureTypeWithRadiusProperty = new List<string>();
-            swSheetMetalFeatureTypeWithRadiusProperty.AddRange(new[] {"SMBaseFlange",
-                                                    "EdgeFlange",
-                                                    "SMBaseFlange",
-                                                    "SketchBend",
-                                                    "SheetMetal",
-                                                    "OneBend",
-                                                    "SMMiteredFlange",
-                                                    "Jog",
-                                                    "ProcessBends"});
-            swSheetMetalFeatureTypeWithKFactorProperty = new List<string>();
-            swSheetMetalFeatureTypeWithKFactorProperty.AddRange(new[] {
-                                                    "EdgeFlange",
-                                                    "SheetMetal",
-                                                    "OneBend",
-                                                    "Hem",
-                                                    "SMMiteredFlange",
-                                                    "Jog",
-                                                    "Bends"});
-
-
-            swSheetMetalFeatureTypeWithThicknessProperty = new List<string>();
-        swSheetMetalFeatureTypeWithThicknessProperty.AddRange(new[] {"SMBaseFlange",
-                                                    "SMBaseFlange",
-                                                    "LoftedBends",
-                                                    "SheetMetal",
-                                                    "OneBend",
-                                                    });
-            
-        }
-    
-
-
-    #region UI methods
-
-    #region Browse for files
-    private void BrowseForFolderButton_Click(object sender, EventArgs e)
         {
-            InitiateOpenFolder();
+            // Tree view icons (index order must match PowerSMEnums.TreeViewIcons)
+            var rm = new System.Resources.ResourceManager("PowerSM.Properties.Resources", typeof(PowerGeometryForm).Assembly);
+            FilesTreeView.ImageList = new ImageList { ColorDepth = ColorDepth.Depth32Bit };
+            FilesTreeView.ImageList.Images.Add((Bitmap)rm.GetObject("part_png"));
+            FilesTreeView.ImageList.Images.Add((Bitmap)rm.GetObject("folder_png"));
 
+            UnitSystemCombBox.SelectedIndex = 0;
+            BendZoneCheckedBox.SelectedIndex = 0;
+            UpdateUnitLabels();
+            UpdateOutputLabel();
+            LoadRecentDirectory();
+
+            toolTip.SetToolTip(BrowseForFolderButton, "Pick the folder that contains the sheet metal parts.");
+            toolTip.SetToolTip(BrowseForOutPutFolder, "Optional. Save modified parts to another folder instead of overwriting them.\nRight-click to clear.");
+            toolTip.SetToolTip(OpenFolder, "Open the source folder in Windows Explorer.");
+            toolTip.SetToolTip(RadiusTextBox, "New bend radius. Leave empty to keep the current value.");
+            toolTip.SetToolTip(ThicknessTextBox, "New thickness. Leave empty to keep the current value.");
+            toolTip.SetToolTip(BendZoneTextBox, "New K-factor, bend allowance or bend deduction. Leave empty to keep the current value.");
+
+            BrowseForOutPutFolder.MouseUp += BrowseForOutPutFolder_MouseUp;
         }
 
-        private void InitiateOpenFolder()
-        {
-            FolderBrowserDialog FolderBrowser = new FolderBrowserDialog();
-            FolderBrowser.ShowDialog();
+        #region UI methods
 
-            if (!string.IsNullOrEmpty(FolderBrowser.SelectedPath))
+        private void UpdateUnitLabels()
+        {
+            var unit = MeasuringUnitsConvertor.Length.UnitLabel(SelectedUnitSystem);
+            NewRadiusLabel.Text = string.Format("Radius ({0}):", unit);
+            label1.Text = string.Format("Thickness ({0}):", unit);
+
+            switch (SelectedBendZoneType)
             {
-                // List all directories
-                CurrentDirectory = FolderBrowser.SelectedPath;
-                ListDirectory(FilesTreeView, CurrentDirectory);
-
-                //Get all tree nodes from treeview
-                AllTreeViewNodes = new List<CustomTreeNode>();
-                GetAllNodesFromTreeView(FilesTreeView, AllTreeViewNodes);
-
-                // Select all nodes
-                selectAllToolStripMenuItem.PerformClick();
-
-                // Add curren directory to recent directory menu strip 
-                System.Configuration.ConfigurationSettings.AppSettings["RecentDirectory"] = CurrentDirectory;
-
-                RecentToolStripMenu.Text = CurrentDirectory;
+                case BendZoneAllowance:
+                    BendZoneValue.Text = string.Format("Allowance ({0}):", unit);
+                    break;
+                case BendZoneDeduction:
+                    BendZoneValue.Text = string.Format("Deduction ({0}):", unit);
+                    break;
+                default:
+                    BendZoneValue.Text = "K-Factor:";
+                    break;
             }
         }
-        private void OutputFolder()
-        {
-            FolderBrowserDialog FolderBrowser = new FolderBrowserDialog();
-            FolderBrowser.ShowDialog();
 
-            if (!string.IsNullOrEmpty(FolderBrowser.SelectedPath))
+        private void UpdateOutputLabel()
+        {
+            OutputStatusLabel.Text = string.IsNullOrEmpty(OutputDirectory)
+                ? "Output: save in place"
+                : "Output: " + OutputDirectory;
+            OutputStatusLabel.ToolTipText = OutputStatusLabel.Text;
+        }
+
+        private void UpdateSelectionStatus()
+        {
+            if (isRunning)
+                return;
+            var count = AllTreeViewNodes.Count(n => n.Checked && n.IsPart);
+            toolStripStatusLabel.Text = count == 0 ? "Ready" : string.Format("Ready - {0} part(s) selected", count);
+        }
+
+        private string SelectedUnitSystem
+        {
+            get { return Convert.ToString(UnitSystemCombBox.SelectedItem) == MeasuringUnitsConvertor.IPS ? MeasuringUnitsConvertor.IPS : MeasuringUnitsConvertor.MMGS; }
+        }
+
+        private string SelectedBendZoneType
+        {
+            get { return Convert.ToString(BendZoneCheckedBox.SelectedItem) ?? BendZoneKFactor; }
+        }
+
+        private void SetRunning(bool running)
+        {
+            isRunning = running;
+            StartButton.Enabled = !running;
+            StartButton.Text = running ? "Running..." : "Start";
+            BrowseForFolderButton.Enabled = !running;
+            BrowseForOutPutFolder.Enabled = !running;
+            SheetMetalDataGroupBox.Enabled = !running;
+            FilesTreeView.Enabled = !running;
+            menuStrip1.Enabled = !running;
+            UseWaitCursor = running;
+        }
+
+        private void AppendLog(IEnumerable<string> lines)
+        {
+            foreach (var line in lines)
+                AppendLog(line);
+        }
+
+        private void AppendLog(string line)
+        {
+            // Normalize bare \n so the WinForms TextBox renders line breaks.
+            var text = (line ?? string.Empty).Replace("\r\n", "\n").Replace("\n", System.Environment.NewLine);
+            LogTextBox.AppendText(text + System.Environment.NewLine);
+        }
+
+        private void PowerGeometryForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (isRunning && e.CloseReason == CloseReason.UserClosing)
             {
-                // List all directories
-                 OutputDirectory = FolderBrowser.SelectedPath;
-                
+                MessageBox.Show(this, "Please wait until the current run finishes.", "Power Geometry Tool",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                e.Cancel = true;
             }
         }
-        private void ListDirectory(TreeView treeView, string path)
+
+        #region Browse for files
+
+        private void BrowseForFolderButton_Click(object sender, EventArgs e)
         {
-            treeView.Nodes.Clear();
-            var rootDirectoryInfo = new DirectoryInfo(path);
-            treeView.Nodes.Add(CreateDirectoryNode(rootDirectoryInfo));
-        }
-
-        private TreeNode CreateDirectoryNode(DirectoryInfo directoryInfo)
-        {
-            List<string> FileExtensions = new List<string>();
-            FileExtensions.AddRange(new[] { "SLDPRT", "sldprt" });
-
-            var directoryNode = new CustomTreeNode(directoryInfo.Name, (int)PowerSMEnums.TreeViewIcons.directory, (int)PowerSMEnums.TreeViewIcons.directory, directoryInfo.FullName);
-
-            foreach (var directory in directoryInfo.GetDirectories())
-                // Do not add hiddens directories
-                if (!directory.Attributes.HasFlag(FileAttributes.Hidden))
-                    directoryNode.Nodes.Add(CreateDirectoryNode(directory));
-
-            foreach (var file in directoryInfo.GetFiles())
+            using (var folderBrowser = new FolderBrowserDialog())
             {
-                if (FileExtensions.Any(x => file.Extension.Contains(x)))
+                folderBrowser.Description = "Select the folder that contains the sheet metal parts";
+                if (!string.IsNullOrEmpty(CurrentDirectory) && Directory.Exists(CurrentDirectory))
+                    folderBrowser.SelectedPath = CurrentDirectory;
+
+                if (folderBrowser.ShowDialog(this) == DialogResult.OK && !string.IsNullOrEmpty(folderBrowser.SelectedPath))
                 {
-                    directoryNode.Nodes.Add(new CustomTreeNode(file.Name, (int)PowerSMEnums.TreeViewIcons.file, (int)PowerSMEnums.TreeViewIcons.file, file.FullName));
+                    LoadDirectory(folderBrowser.SelectedPath);
 
+                    PowerSMSettings.RecentDirectory = CurrentDirectory;
+                    PowerSMSettings.Save();
+                    LoadRecentDirectory();
                 }
             }
+        }
+
+        private void BrowseForOutPutFolder_Click(object sender, EventArgs e)
+        {
+            using (var folderBrowser = new FolderBrowserDialog())
+            {
+                folderBrowser.Description = "Select the folder where modified parts will be saved";
+                if (folderBrowser.ShowDialog(this) == DialogResult.OK && !string.IsNullOrEmpty(folderBrowser.SelectedPath))
+                {
+                    OutputDirectory = folderBrowser.SelectedPath;
+                    UpdateOutputLabel();
+                }
+            }
+        }
+
+        private void BrowseForOutPutFolder_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right && !isRunning && !string.IsNullOrEmpty(OutputDirectory))
+            {
+                OutputDirectory = null;
+                UpdateOutputLabel();
+            }
+        }
+
+        private void LoadDirectory(string path)
+        {
+            CurrentDirectory = path;
+
+            FilesTreeView.BeginUpdate();
+            try
+            {
+                FilesTreeView.Nodes.Clear();
+                var root = CreateDirectoryNode(new DirectoryInfo(path));
+                FilesTreeView.Nodes.Add(root);
+                root.Expand();
+            }
+            finally
+            {
+                FilesTreeView.EndUpdate();
+            }
+
+            AllTreeViewNodes = new List<CustomTreeNode>();
+            GetAllNodesFromTreeView(FilesTreeView, AllTreeViewNodes);
+            SetAllNodesChecked(true);
+            FilesTreeGroupBox.Text = "Files Tree - " + path;
+        }
+
+        private static CustomTreeNode CreateDirectoryNode(DirectoryInfo directoryInfo)
+        {
+            var directoryNode = new CustomTreeNode(directoryInfo.Name, (int)PowerSMEnums.TreeViewIcons.directory,
+                (int)PowerSMEnums.TreeViewIcons.directory, directoryInfo.FullName, false);
+
+            try
+            {
+                foreach (var directory in directoryInfo.GetDirectories())
+                {
+                    // Do not add hidden directories
+                    if (!directory.Attributes.HasFlag(FileAttributes.Hidden))
+                        directoryNode.Nodes.Add(CreateDirectoryNode(directory));
+                }
+
+                foreach (var file in directoryInfo.GetFiles())
+                {
+                    // Parts only, any casing; skip SOLIDWORKS lock/temp files (~$part.sldprt)
+                    if (string.Equals(file.Extension, PartExtension, StringComparison.OrdinalIgnoreCase)
+                        && !file.Name.StartsWith("~$", StringComparison.Ordinal))
+                    {
+                        directoryNode.Nodes.Add(new CustomTreeNode(file.Name, (int)PowerSMEnums.TreeViewIcons.file,
+                            (int)PowerSMEnums.TreeViewIcons.file, file.FullName, true));
+                    }
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                directoryNode.Text += " (access denied)";
+            }
+            catch (IOException)
+            {
+                directoryNode.Text += " (unreadable)";
+            }
+
             return directoryNode;
         }
+
         #endregion
 
         private void OpenFolder_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(CurrentDirectory))
-                System.Diagnostics.Process.Start("explorer.exe", CurrentDirectory);
+            if (!string.IsNullOrEmpty(CurrentDirectory) && Directory.Exists(CurrentDirectory))
+                System.Diagnostics.Process.Start("explorer.exe", "\"" + CurrentDirectory + "\"");
         }
-        private void BrowseForOutPutFolder_Click(object sender, EventArgs e)
-        {
-            OutputFolder();
-        }
+
         private void optionsToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            var powersmoptions = new PowerGeometryOptions();
-            powersmoptions.Owner = this;
-            powersmoptions.StartPosition = FormStartPosition.CenterParent;
-            powersmoptions.ShowDialog();
+            using (var options = new PowerGeometryOptions())
+            {
+                options.ShowDialog(this);
+            }
         }
 
-
         #region UI: Check/uncheck children feature
+
         private void FilesTreeView_AfterCheck(object sender, TreeViewEventArgs e)
-        {   // MSDN:
-            // The code only executes if the user caused the checked state to change.
+        {
+            // Only react to user changes, not to the recursive changes made below.
             if (e.Action != TreeViewAction.Unknown)
             {
                 if (e.Node.Nodes.Count > 0)
-                {   // MSDN:
-                    /* Calls the CheckAllChildNodes method, passing in the current 
-                    Checked value of the TreeNode whose checked state changed. */
-                    this.CheckAllChildNodes(e.Node, e.Node.Checked);
-                }
+                    CheckAllChildNodes(e.Node, e.Node.Checked);
+                UpdateSelectionStatus();
             }
         }
-        private void CheckAllChildNodes(TreeNode treeNode, bool nodeChecked)
+
+        private static void CheckAllChildNodes(TreeNode treeNode, bool nodeChecked)
         {
             foreach (TreeNode node in treeNode.Nodes)
             {
                 node.Checked = nodeChecked;
                 if (node.Nodes.Count > 0)
-                {
-                    // If the current node has child nodes, call the CheckAllChildsNodes method recursively.
-                    this.CheckAllChildNodes(node, nodeChecked);
-                }
+                    CheckAllChildNodes(node, nodeChecked);
             }
         }
 
+        private void SetAllNodesChecked(bool isChecked)
+        {
+            foreach (var node in AllTreeViewNodes)
+                node.Checked = isChecked;
+            UpdateSelectionStatus();
+        }
 
         #endregion
 
         private void SaveLog_Click(object sender, EventArgs e)
         {
-            SaveFileDialog _SaveFileDialog = new SaveFileDialog();
-            _SaveFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
-            _SaveFileDialog.FileOk += SaveFileDialog_FileOK;
-            _SaveFileDialog.ShowDialog();
-        }
-
-        private void SaveFileDialog_FileOK(object sender, EventArgs e)
-        {
-            var _SaveFileDialog = (SaveFileDialog)sender;
-            try
+            using (var saveFileDialog = new SaveFileDialog())
             {
-                System.IO.File.WriteAllText(_SaveFileDialog.FileName, LogTextBox.Text);
-            }
-            catch (Exception)
-            {
-                ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_Write_Log_File);
+                saveFileDialog.Filter = "Text files (*.txt)|*.txt|All files (*.*)|*.*";
+                saveFileDialog.FileName = string.Format("PowerSM_{0:yyyyMMdd_HHmmss}.txt", DateTime.Now);
+                if (saveFileDialog.ShowDialog(this) != DialogResult.OK)
+                    return;
+                try
+                {
+                    File.WriteAllText(saveFileDialog.FileName, LogTextBox.Text);
+                }
+                catch (Exception)
+                {
+                    ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_Write_Log_File);
+                }
             }
         }
 
         private void quitToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
-            this.Close();
+            Close();
         }
 
         private void aboutThisToolToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AboutBox aboutbox = new AboutBox();
-            aboutbox.ShowDialog();
+            using (var aboutBox = new AboutBox())
+            {
+                aboutBox.ShowDialog(this);
+            }
         }
 
         private void selectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (AllTreeViewNodes != null)
-            {
-                foreach (TreeNode treenode in AllTreeViewNodes)
-                {
-                    treenode.Checked = true;
-                }
-            }
+            SetAllNodesChecked(true);
         }
+
         private void unSelectAllToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (AllTreeViewNodes != null)
-            {
-                foreach (TreeNode treenode in AllTreeViewNodes)
-                {
-                    treenode.Checked = false;
-                }
-            }
+            SetAllNodesChecked(false);
         }
+
+        private void helpToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            System.Diagnostics.Process.Start(HelpUrl);
+        }
+
+        private void LoadRecentDirectory()
+        {
+            var recent = PowerSMSettings.RecentDirectory;
+            var exists = !string.IsNullOrEmpty(recent) && Directory.Exists(recent);
+            RecentToolStripMenu.Text = exists ? recent : "(none)";
+            RecentToolStripMenu.Enabled = exists;
+        }
+
+        private void RecentToolStripMenu_Click(object sender, EventArgs e)
+        {
+            var recent = PowerSMSettings.RecentDirectory;
+            if (!string.IsNullOrEmpty(recent) && Directory.Exists(recent))
+                LoadDirectory(recent);
+        }
+
+        private void PowerGeometryForm_Activated(object sender, EventArgs e)
+        {
+            LoadRecentDirectory();
+        }
+
         #endregion
 
         #region GetAllNodes methods
-        private static void GetAllNodesFromTreeView(TreeView treeview, List<CustomTreeNode> AllTreeViewNodes)
-        {
-            AllTreeViewNodes.RemoveAll(x => x != null);
-            foreach (CustomTreeNode treenode in treeview.Nodes)
-            {
-                GetChildrenNodesFromNode(treenode, AllTreeViewNodes);
-            }
 
-        }
-        private static void GetChildrenNodesFromNode(CustomTreeNode treenode, List<CustomTreeNode> AllTreeViewNodes)
+        private static void GetAllNodesFromTreeView(TreeView treeview, List<CustomTreeNode> allTreeViewNodes)
         {
-            AllTreeViewNodes.Add(treenode);
-            foreach (CustomTreeNode childtreenode in treenode.Nodes)
-                GetChildrenNodesFromNode(childtreenode, AllTreeViewNodes);
+            allTreeViewNodes.Clear();
+            foreach (CustomTreeNode treenode in treeview.Nodes)
+                GetChildrenNodesFromNode(treenode, allTreeViewNodes);
         }
+
+        private static void GetChildrenNodesFromNode(CustomTreeNode treenode, List<CustomTreeNode> allTreeViewNodes)
+        {
+            allTreeViewNodes.Add(treenode);
+            foreach (CustomTreeNode childtreenode in treenode.Nodes)
+                GetChildrenNodesFromNode(childtreenode, allTreeViewNodes);
+        }
+
         #endregion
 
+        #region Run
+
+        /// <summary>Parses a user value; empty means "do not change" (0). Accepts both the current culture and '.' decimals.</summary>
+        private static bool TryParseInput(string text, out double value)
+        {
+            value = 0;
+            if (string.IsNullOrWhiteSpace(text))
+                return true;
+            text = text.Trim();
+            return (double.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out value)
+                    || double.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+                   && value >= 0 && !double.IsInfinity(value) && !double.IsNaN(value);
+        }
 
         private async void StartButton_Click(object sender, EventArgs e)
         {
-            // Radius must be a double
-            double Radius;
-            if (!double.TryParse(String.IsNullOrWhiteSpace(RadiusTextBox.Text) ? "0" : RadiusTextBox.Text, out Radius))
+            if (isRunning)
+                return;
+
+            double radius, thickness, bendZoneValue;
+            if (!TryParseInput(RadiusTextBox.Text, out radius))
             {
                 ErrorEchoer.Err((int)PowerSMEnums.Errors.Cannot_parse_radius_value);
+                RadiusTextBox.Focus();
                 return;
             }
-
-            double thickness;
-            if (!double.TryParse(String.IsNullOrWhiteSpace(ThicknessTextBox.Text) ? "0" : ThicknessTextBox.Text, out thickness))
+            if (!TryParseInput(ThicknessTextBox.Text, out thickness))
             {
                 ErrorEchoer.Err((int)PowerSMEnums.Errors.cannot_parse_thickness);
+                ThicknessTextBox.Focus();
                 return;
             }
-
-            double BendZoneValue;
-             
-            if (!double.TryParse(String.IsNullOrWhiteSpace(BendZoneTextBox.Text) ? "0" : BendZoneTextBox.Text, out BendZoneValue))
-            {
-               ErrorEchoer.Err((int)PowerSMEnums.Errors.cannot_parse_kfacor);
-               return; 
-            }
-
-            if (BendZoneValue > 1)
+            // A K-factor must be between 0 and 1; bend allowance / deduction are lengths.
+            if (!TryParseInput(BendZoneTextBox.Text, out bendZoneValue)
+                || (SelectedBendZoneType == BendZoneKFactor && bendZoneValue > 1))
             {
                 ErrorEchoer.Err((int)PowerSMEnums.Errors.cannot_parse_kfacor);
+                BendZoneTextBox.Focus();
                 return;
             }
-
-            // check if list has nodes
 
             if (FilesTreeView.Nodes.Count == 0)
             {
@@ -311,975 +483,610 @@ namespace PowerSM
                 return;
             }
 
-            // create selectednodes list 
+            var jobs = AllTreeViewNodes
+                .Where(n => n.Checked && n.IsPart && File.Exists(n.FullFilePath))
+                .Select(n => new PartJob { FullFilePath = n.FullFilePath, RelativePath = n.FullPath })
+                .ToList();
 
-            List<CustomTreeNode> SelectedTreeNodes = AllTreeViewNodes.FindAll(x => x.Checked == true).FindAll(x => File.Exists(x.FullFilePath));
-
-            // return if no tree nodes are selected 
-            if (SelectedTreeNodes.Count == 0)
+            if (jobs.Count == 0)
+            {
+                MessageBox.Show(this, "No part files are selected.", "Power Geometry Tool", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
+            }
 
-            // housekeeping: Progressbar, LogTextBox
-            _ProgressBar.Value = 0;
+            var unitSystem = SelectedUnitSystem;
+            var bendZoneType = SelectedBendZoneType;
+            var settings = new RunSettings
+            {
+                UnitSystem = unitSystem,
+                BendZoneType = bendZoneType,
+                RadiusMeters = MeasuringUnitsConvertor.Length.ToMeters(radius, unitSystem),
+                ThicknessMeters = MeasuringUnitsConvertor.Length.ToMeters(thickness, unitSystem),
+                BendZoneValue = bendZoneType == BendZoneKFactor ? bendZoneValue : MeasuringUnitsConvertor.Length.ToMeters(bendZoneValue, unitSystem),
+                Force = PowerSMSettings.ForceMode,
+                SetOverrideToFalse = !PowerSMSettings.ForceMode && PowerSMSettings.SetOverrideToFalse,
+                ForceDimensionalRespect = PowerSMSettings.ForceDimensionalRespect,
+                Archive = PowerSMSettings.ArchiveInZipFormat,
+                OutputDirectory = OutputDirectory
+            };
+
+            SetRunning(true);
+            LogTextBox.Clear();
             _ProgressBar.Minimum = 0;
-            var ProgressMaximum = SelectedTreeNodes.Count;
-            _ProgressBar.Step = (int)(ProgressMaximum / SelectedTreeNodes.Count);
-            _ProgressBar.Maximum = ProgressMaximum;
-            LogTextBox.Text = string.Empty;
+            _ProgressBar.Maximum = jobs.Count;
+            _ProgressBar.Step = 1;
+            _ProgressBar.Value = 0;
 
-            // if ArchiveZipFormat is true, prepare temp directory etc..
-            if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]))
-            PrepareZip();
-            // sleeves roll-up:
-
-            Boolean force = Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["Force"]);
-            foreach (CustomTreeNode element in SelectedTreeNodes)
+            try
             {
+                if (settings.Archive && string.IsNullOrEmpty(settings.OutputDirectory))
+                    AppendLog("Note: zip archiving is on but no output folder is selected. Files will be saved in place and not archived.");
 
-                Task<string[]> ChangeSheetMetalFeaturesAsyncTask = ChangeSheetMetalFeaturesAsync(element, Radius,thickness,BendZoneValue,force);
-                string[] result = await ChangeSheetMetalFeaturesAsyncTask;
-                _ProgressBar.PerformStep();
-                toolStripStatusLabel.Text = ((_ProgressBar.Value * 1.0) / (_ProgressBar.Maximum * 1.0)).ToString("P", System.Globalization.CultureInfo.InvariantCulture);
-                LogTextBox.Text += string.Join(System.Environment.NewLine, result);
+                if (settings.ArchiveToZip)
+                    await Task.Run(() => PrepareZip(settings.OutputDirectory));
 
+                var processed = 0;
+                foreach (var job in jobs)
+                {
+                    toolStripStatusLabel.Text = string.Format("Processing {0} of {1}: {2}", processed + 1, jobs.Count, Path.GetFileName(job.FullFilePath));
+                    var currentJob = job;
+                    var result = await Task.Run(() => ChangeSheetMetalFeatures(currentJob, settings));
+                    AppendLog(result);
+                    processed++;
+                    _ProgressBar.PerformStep();
+                }
+
+                if (settings.ArchiveToZip)
+                {
+                    toolStripStatusLabel.Text = "Compressing...";
+                    var zipPath = await Task.Run(() => CreateZip(settings.OutputDirectory));
+                    AppendLog(string.Format("[{0}] Archive created: {1}", DateTime.Now, zipPath));
+                }
+
+                toolStripStatusLabel.Text = string.Format("Done - {0} part(s) processed", processed);
             }
-
-            // Compress
-
-            if ((!(string.IsNullOrEmpty(OutputDirectory)) && Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"])))
+            catch (Exception exception)
             {
-            
-
-                toolStripStatusLabel.Text = "Compressing...";
-
-                Task task = Task.Run(() =>
-               {
-                  
-                   System.IO.Compression.ZipFile.CreateFromDirectory(@"C:\Temp\PowerSM", String.Format(@"{0}\powersm.zip",OutputDirectory));
-
-               }
-
-               );
-                task.Wait();
+                AppendLog(string.Format("[{0}] - ERROR: {1}", DateTime.Now, exception.Message));
+                toolStripStatusLabel.Text = "Finished with errors";
             }
-
-            toolStripStatusLabel.Text = "Ready";
-
+            finally
+            {
+                SetRunning(false);
+            }
         }
-        
-        private async Task<string[]> ChangeSheetMetalFeaturesAsync(CustomTreeNode customtreenode, double radius,double thickness, double BendZoneValue, Boolean force)
+
+        private static void PrepareZip(string outputDirectory)
         {
+            var tempFolder = TempArchiveFolder;
+            if (Directory.Exists(tempFolder))
+                Directory.Delete(tempFolder, true);
+            Directory.CreateDirectory(tempFolder);
 
-            return await Task.Run(() => ChangeSheetMetalFeatures(customtreenode, radius,thickness, BendZoneValue, force));
-
+            var zipPath = Path.Combine(outputDirectory, ArchiveFileName);
+            if (File.Exists(zipPath))
+                File.Delete(zipPath);
         }
 
+        private static string CreateZip(string outputDirectory)
+        {
+            var zipPath = Path.Combine(outputDirectory, ArchiveFileName);
+            if (File.Exists(zipPath))
+                File.Delete(zipPath);
+            ZipFile.CreateFromDirectory(TempArchiveFolder, zipPath);
+            return zipPath;
+        }
+
+        #endregion
 
         #region ChangeSheetMetalFeatures
 
-        private void PrepareZip()
+        // Runs on a worker thread: must not touch any control. Everything it needs is in RunSettings.
+        private string[] ChangeSheetMetalFeatures(PartJob job, RunSettings settings)
         {
-            string TempFolder = @"C:\Temp\PowerSM";
-            // Create new temp folder
-            System.IO.Directory.CreateDirectory(TempFolder);
+            var results = new List<string>();
+            ModelDoc2 swModelDoc = null;
+            var wasAlreadyOpen = false;
 
-            // Delete old temp folder
-            System.IO.DirectoryInfo tempfolderdirectory = new DirectoryInfo(TempFolder);
-            foreach (FileInfo file in tempfolderdirectory.GetFiles())
-            {
-                file.Delete();
-            }
-            foreach (DirectoryInfo dir in tempfolderdirectory.GetDirectories())
-            {
-                dir.Delete(true);
-            }
-            // Create new temp folder
-            System.IO.Directory.CreateDirectory(TempFolder);
-            // try to delete old archivage
-            try 
-            {
-                System.IO.File.Delete(String.Format(@"{0}\powersm.zip", OutputDirectory));
-            }
-            catch (Exception) 
-            {
-            }
-        }
-        private string[] ChangeSheetMetalFeatures(CustomTreeNode customtreenode, double radius, double thickness, double BendZoneValue, Boolean force)
-        {
-            
+            results.Add(string.Format("[{0}] PART FILENAME: {1}", DateTime.Now, job.FullFilePath));
 
-            List<string> Results = new List<string>();
-            ModelDoc2 swModelDoc;
-
-           try
+            try
             {
-                StartButton.Enabled = false;
-                int Error = 0;
-                int Warning = 0;
-                Results.Add(string.Format("[{0}] PART FILENAME: {1}", DateTime.Now.ToString(), customtreenode.FullFilePath)); 
+                int error = 0;
+                int warning = 0;
+
+                // Don't close a document the user already had open.
+                wasAlreadyOpen = swApp.GetOpenDocumentByName(job.FullFilePath) != null;
 
                 swApp.DocumentVisible(false, (int)swDocumentTypes_e.swDocPART);
-                swModelDoc = swApp.OpenDoc6(customtreenode.FullFilePath, (int)swDocumentTypes_e.swDocPART, (int)swOpenDocOptions_e.swOpenDocOptions_Silent, string.Empty, ref Error, ref Warning);
+                swModelDoc = swApp.OpenDoc6(job.FullFilePath, (int)swDocumentTypes_e.swDocPART,
+                    (int)swOpenDocOptions_e.swOpenDocOptions_Silent, string.Empty, ref error, ref warning);
 
-                // All errors and warnings would throw a an error
-                if (Warning != 0)
+                // Any error or warning skips the file.
+                if (error != 0)
+                    throw new OpenFileException(error, false);
+                if (warning != 0)
+                    throw new OpenFileException(warning, true);
+                if (swModelDoc == null)
+                    throw new InvalidOperationException("SOLIDWORKS could not open the file.");
+
+                if (settings.Force)
                 {
-                    throw new OpenFileException(Warning, true);
+                    // Force mode: write values on every feature, breaking inheritance.
+                    if (settings.HasThickness)
+                        results.AddRange(ForceChangeThickness(swModelDoc, settings));
+                    if (settings.HasBendZone)
+                        results.AddRange(ForceChangeBendZone(swModelDoc, settings));
+                    if (settings.HasRadius)
+                        results.AddRange(ForceChangeRadius(swModelDoc, settings));
                 }
-                else if (Error != 0)
-                {
-                    throw new OpenFileException(Error, false);
-                }
-
-
-              if (force) { 
-                // change thickness
-                if (thickness > 0)
-                {
-                    Results.AddRange(ForceChangeThickness(swModelDoc, thickness));
-
-                }
-                // change BendZone value
-                if (BendZoneValue > 0)
-                {
-                    Results.AddRange(ForceChangeBendZone(swModelDoc, BendZoneValue));
-
-                }
-
-                // change radius
-
-                if (radius > 0)
-                {
-
-                    Results.AddRange(ForceChangeRadius(swModelDoc, radius));
-                }
-
-                   
-                }
-                 // force is false. It will change the sheet metal features and will the changes propegate through the sub-features
-                
-              else
-                {
-                    if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["SetOverrideToFalse"]) == true) { 
-                    #region "Remove all overriding parameters"
-
-                    FeatureManager swFeatureManager = swModelDoc.FeatureManager;
-                    var swFeatures = swFeatureManager.GetFeatures(false);
-                    var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
-                    // remove any overridden parameters from sheet metal 
-                    foreach (Object FeatObj in swSheetMetalFolder.GetSheetMetals())
-                    {
-                        var swSheetMetalFeature = (Feature)FeatObj;
-                        SheetMetalFeatureData swSheetMetalFeatureData = swSheetMetalFeature.GetDefinition();
-                        swSheetMetalFeatureData.SetOverrideDefaultParameter(false);
-                       bool r = swSheetMetalFeature.ModifyDefinition((object)swSheetMetalFeatureData, swModelDoc, null);
-                       Results.Add(string.Format("\n\t * Trying to make sheet named {1} inherit from parent SM folder: {0}...\n", r.ToString(), swSheetMetalFeature.Name));
-                        }
-
-                    // make sure sheet metal features use default parameters 
-                    foreach (Object FeatObj in swFeatures)
-                    {
-                        var swSheetMetalFeature = (Feature)FeatObj;
-                         
-                        // set default radius and bend allowance to true
-                        dynamic swSheetMetalFeatureData = (new List<string> {
-                                                    "EdgeFlange",
-                                                    "SM3dBend",
-                                                    "SketchBend",
-                                                    "OneBend", 
-                                                    "SMMiteredFlange",
-                                                    "Jog",
-                                                    "Bends",
-                                                    "ProcessBends",
-                                                    "FlattenBends",
-                        }).Exists((x) => x == swSheetMetalFeature.GetTypeName2()) ? swSheetMetalFeature.GetDefinition() : null;
-                        if (swSheetMetalFeatureData != null)
-                        {
-                                swSheetMetalFeatureData.UseDefaultBendRadius = true;
-                            swSheetMetalFeatureData.UseDefaultBendAllowance = true;
-                           bool r =  swSheetMetalFeature.ModifyDefinition((object)swSheetMetalFeatureData, swModelDoc, null);
-                           Results.Add(string.Format("\n\t * Attempting to make feature named {1} inherit parameters from parent feature/sheet: {0}...\n", r.ToString(), swSheetMetalFeature.Name));
-                            }
-                        // set default radius and thickness for base flange
-                        dynamic swBaseFlangeFeatureData = "SMBaseFlange" == swSheetMetalFeature.GetTypeName2() ? swSheetMetalFeature.GetDefinition() : null;
-                        if (swBaseFlangeFeatureData != null)
-                        {
-                                if (swBaseFlangeFeatureData.UseGaugeTable == true)
-                                {
-                                    swBaseFlangeFeatureData.OverrideThickness = false;
-                                    swBaseFlangeFeatureData.OverrideRadius = false;
-                                    swBaseFlangeFeatureData.OverrideKFactor = false;
-                                    bool r = swSheetMetalFeature.ModifyDefinition((object)swBaseFlangeFeatureData, swModelDoc, null);
-                                    Results.Add(string.Format("\n\t * Attempting to set override of base flange feature named {1} to false: {0}...\n", r.ToString(), swSheetMetalFeature.Name));
-
-                                }
-                            }
-
-
-                            dynamic swHemSheetMetalFeatureData = "Hem" == swSheetMetalFeature.GetTypeName2() ? swSheetMetalFeature.GetDefinition() : null;
-                            if (swHemSheetMetalFeatureData != null)
-                            {
-                                swHemSheetMetalFeatureData.UseDefaultBendAllowance = false;
-                                bool r = swSheetMetalFeature.ModifyDefinition((object)swHemSheetMetalFeatureData, swModelDoc, null);
-                                Results.Add(string.Format("\n\t * Attempting to make hem feature named {1} uses default bend allowance: {0}...\n", r.ToString(), swSheetMetalFeature.Name));
-                            }
-
-
-                            dynamic swBendReliefSheetMetalFeatureData= (new List<string> {"EdgeFlange","OneBend","SketchBend"}).Exists( (x) => x ==  swSheetMetalFeature.GetTypeName2()) ? swSheetMetalFeature.GetDefinition() : null;
-                            if (swBendReliefSheetMetalFeatureData != null)
-                            {
-                                swBendReliefSheetMetalFeatureData.UseDefaultBendRelief = false;
-                                bool r = swSheetMetalFeature.ModifyDefinition((object)swBendReliefSheetMetalFeatureData, swModelDoc, null);
-                                Results.Add(string.Format("\n\t * Attempting to make feature named {1} uses default bend relief: {0}...\n", r.ToString(), swSheetMetalFeature.Name));
-                            }
-                    
-
-
-                    }
-                        #endregion
-                    }
-
-
-                        // change thickness
-                        if (thickness > 0)
-                    {
-                        
-                        Results.AddRange(ChangeThickness(swModelDoc, thickness));
-
-                    }
-                    // change k-factor
-                    if (BendZoneValue > 0)
-                    {
-                      
-                        Results.AddRange(ChangeBendZone(swModelDoc, BendZoneValue));
-
-                    }
-
-                    // change radius
-
-                    if (radius > 0)
-                    {
-
-                        Results.AddRange(ChangeRadius(swModelDoc, radius));
-                    }
-
-                }
-
-                // save 
-                if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ArchiveInZipFormat"]) && !String.IsNullOrEmpty(OutputDirectory))
-                {
-                    string TempFolder = @"C:\Temp\PowerSM";
-                    string newfilename = string.Format(@"{0}\{1}", TempFolder, customtreenode.FullPath);
-                    // create full directory for new file
-                    System.IO.Directory.CreateDirectory(newfilename);
-                    System.IO.Directory.Delete(newfilename);
-                    // save
-                    var saveresult = swModelDoc.Extension.SaveAs(newfilename, (int)swSaveAsVersion_e.swSaveAsCurrentVersion, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref Error, ref Warning);
-                    Results.Add(string.Format("\n\t * Saving and compressing... : {0} Error: {1} Warning: {2} ", saveresult.ToString(), Error, Warning));
-                    swApp.CloseDoc(string.Empty);
-                    Results.Add(System.Environment.NewLine);
-                    swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
-                }
-
-               else if (!String.IsNullOrEmpty(OutputDirectory))
-               {
-                   string newfilename = string.Format(@"{0}\{1}", OutputDirectory, customtreenode.FullPath);
-                   // create full directory for new file
-                   System.IO.Directory.CreateDirectory(newfilename);
-                   System.IO.Directory.Delete(newfilename);
-                   // save
-                   var saveresult = swModelDoc.Extension.SaveAs(newfilename, (int)swSaveAsVersion_e.swSaveAsCurrentVersion, (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref Error, ref Warning);
-                   Results.Add(string.Format("\n\t * Saving to output directory... : {0} Error: {1} Warning: {2} \n", saveresult.ToString(), Error, Warning));
-                   Results.Add(System.Environment.NewLine);
-                   swApp.CloseDoc(string.Empty);
-                   swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
-               }
-               
                 else
                 {
-                    // Save part
-                    Results.Add(string.Format("\n\t * Saving file...\n"));
-                    Results.Add(System.Environment.NewLine);
-                    swModelDoc.Save();
-                    swApp.CloseDoc(string.Empty);
-                    Results.Add(System.Environment.NewLine);
-                    swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
-                    
+                    // Normal mode: change the sheet metal folder and let features inherit.
+                    if (settings.SetOverrideToFalse)
+                        results.AddRange(RemoveOverridingParameters(swModelDoc));
+                    if (settings.HasThickness)
+                        results.AddRange(ChangeThickness(swModelDoc, settings));
+                    if (settings.HasBendZone)
+                        results.AddRange(ChangeBendZone(swModelDoc, settings));
+                    if (settings.HasRadius)
+                        results.AddRange(ChangeRadius(swModelDoc, settings));
                 }
-                StartButton.Enabled = true;
-                return Results.ToArray<string>();
 
+                results.AddRange(SaveDocument(swModelDoc, job, settings));
             }
-            catch(Exception exception)
+            catch (Exception exception)
             {
-                var ErrorString = string.Format("[{0}] - ERROR: {1}", DateTime.Now.ToString(), exception.Message);
-                Results.Add(ErrorString);
-                Results.Add(System.Environment.NewLine);
+                results.Add(string.Format("[{0}] - ERROR: {1}", DateTime.Now, exception.Message));
+            }
+            finally
+            {
+                if (swModelDoc != null && !wasAlreadyOpen)
+                    CloseDocument(swModelDoc);
                 swApp.DocumentVisible(true, (int)swDocumentTypes_e.swDocPART);
-                swApp.CloseDoc(string.Empty);
-                StartButton.Enabled = true;
-                return Results.ToArray<string>();
             }
-        
 
-            
+            results.Add(string.Empty);
+            return results.ToArray();
         }
 
-
-     
-      
-        private string[] ForceChangeRadius(ModelDoc2 swModelDoc, double radius)
+        private IEnumerable<string> SaveDocument(ModelDoc2 swModelDoc, PartJob job, RunSettings settings)
         {
+            int error = 0;
+            int warning = 0;
 
-            double swSheetMetalThickness = 0;
-           
-            List<string> Results = new List<string>();
-     
+            if (!string.IsNullOrEmpty(settings.OutputDirectory))
+            {
+                var targetRoot = settings.ArchiveToZip ? TempArchiveFolder : settings.OutputDirectory;
+                var newFileName = Path.Combine(targetRoot, job.RelativePath);
+                Directory.CreateDirectory(Path.GetDirectoryName(newFileName));
 
+                var saved = swModelDoc.Extension.SaveAs(newFileName, (int)swSaveAsVersion_e.swSaveAsCurrentVersion,
+                    (int)swSaveAsOptions_e.swSaveAsOptions_Silent, null, ref error, ref warning);
+                return new[]
+                {
+                    string.Format("\t * {0} {1} : {2} Error: {3} Warning: {4}",
+                        settings.ArchiveToZip ? "Saving for archive" : "Saving to output folder",
+                        newFileName, saved ? "SUCCESS" : "FAILURE", error, warning)
+                };
+            }
+
+            var savedInPlace = swModelDoc.Save3((int)swSaveAsOptions_e.swSaveAsOptions_Silent, ref error, ref warning);
+            return new[]
+            {
+                string.Format("\t * Saving file : {0} Error: {1} Warning: {2}", savedInPlace ? "SUCCESS" : "FAILURE", error, warning)
+            };
+        }
+
+        private void CloseDocument(ModelDoc2 swModelDoc)
+        {
             try
             {
-                
-
-                // Check unit system and convert radius to corresponding value
-                int LengthUnit = swModelDoc.LengthUnit;
-                switch (LengthUnit)
-                {
-                    case (int)swLengthUnit_e.swMM:
-                        {
-                            if (UnitSystemCombBox.Text == "MMGS")
-                            {
-                                //radius = radius / 1000.0;
-
-                            }
-
-                            else
-                            {
-                                radius = MeasuringUnitsConvertor.Length.FromInchToMillimeters(radius);
-                            }
-                            break;
-                        }
-                    case (int)swLengthUnit_e.swINCHES:
-                        if (UnitSystemCombBox.Text == "IPS")
-                        {
-
-                            //radius = radius / 1000.0;
-
-                        }
-                        else
-                        {
-
-                            radius = MeasuringUnitsConvertor.Length.FromMillimetersToInchs(radius);
-
-
-                        }
-                        break;
-                    default:
-                        break;
-                }
-
-                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
-                var swFeatures = swFeatureManager.GetFeatures(false);
-                foreach (Feature swFeature in swFeatures)
-                {
-                    dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithRadiusProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
-                    if (swSheetMetalDataFeature == null)
-                        continue;
-
-                    if (swSheetMetalDataFeature is SheetMetalFeatureData)
-                    {
-                       swSheetMetalDataFeature.SetOverrideDefaultParameter(true);
-                       swSheetMetalThickness  = swSheetMetalDataFeature.Thickness; 
-                    }
-                    if (swSheetMetalDataFeature is OneBendFeatureData)
-                        swSheetMetalDataFeature.UseDefaultBendRadius = false;
-
-                    if (swSheetMetalDataFeature is BaseFlangeFeatureData)
-                        swSheetMetalDataFeature.OverrideRadius = true;
-
-                    if (swSheetMetalDataFeature is EdgeFlangeFeatureData)
-                    {
-                        swSheetMetalDataFeature.UseDefaultBendRadius = false;
-                        // If Edge Flange's bend is outside of the base flange, compensation is needed in order to respect outside dimensions
-                        if (Convert.ToBoolean(System.Configuration.ConfigurationSettings.AppSettings["ForceDimensionalRespect"]))
-                        {
-                           
-                            if (swSheetMetalDataFeature.PositionType == (int)swFlangePositionTypes_e.swFlangePositionTypeBendOutside)
-                            {
-                                swSheetMetalDataFeature.UsePositionOffset = true;
-                                var dif = radius - swSheetMetalDataFeature.BendRadius; // difference between old radius and new radius
-                                if (dif >= 0)
-                                {
-                                    swSheetMetalDataFeature.PositionOffsetType = (int)swFlangeOffsetTypes_e.swFlangeOffsetBlind;
-                                    swSheetMetalDataFeature.ReversePositionOffset = true;
-                                    swSheetMetalDataFeature.PositionOffsetDistance = dif + 0.5 * swSheetMetalThickness;
-                                }
-                                else
-                                {
-                                    swSheetMetalDataFeature.PositionOffsetType = (int)swFlangeOffsetTypes_e.swFlangeOffsetBlind;
-                                    swSheetMetalDataFeature.PositionOffsetDistance = dif + 0.5 * swSheetMetalThickness;
-
-                                }
-                            }
-                        }        
-                    }
-
-                    swSheetMetalDataFeature.BendRadius = (radius * 1.0);
-                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    
-                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s radius to {1} {3} : {2}.", swFeature.Name, radius.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
-
-
-                }
-
-              
-                return Results.ToArray<string>();
-
+                var name = swModelDoc.GetTitle();
+                if (string.IsNullOrEmpty(name))
+                    name = swModelDoc.GetPathName();
+                swApp.CloseDoc(name);
             }
-            catch (Exception exception)
+            catch (Exception)
             {
-
-                return Results.ToArray<string>();
-
+                // The document may already be gone; nothing else to do.
             }
-        }   
-        private string[] ForceChangeBendZone(ModelDoc2 swModelDoc, double BendZoneValue)
-        {
-            List<string> Results = new List<string>();
+        }
 
+        #region Normal mode: changes go through the sheet metal folder
+
+        private IEnumerable<string> RemoveOverridingParameters(ModelDoc2 swModelDoc)
+        {
+            var results = new List<string>();
             try
             {
-                #region sheetmetalfolder 
-                // change sheet metal folder data
                 FeatureManager swFeatureManager = swModelDoc.FeatureManager;
-                var swFeatures = swFeatureManager.GetFeatures(false);
                 var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
-                if (!(swSheetMetalFolder == null))
+
+                // Sheet metal features inherit from the sheet metal folder
+                var sheetMetals = swSheetMetalFolder == null ? null : swSheetMetalFolder.GetSheetMetals() as object[];
+                if (sheetMetals != null)
                 {
-                    Feature swSheetMetalFolderFeature = swSheetMetalFolder.GetFeature();         
-                    SheetMetalFeatureData swSheetMetalFeatureDataFromFolder = swSheetMetalFolderFeature.GetDefinition();
-                    CustomBendAllowance swCustomBendAllowance = swSheetMetalFeatureDataFromFolder.GetCustomBendAllowance();
-
-                    switch (BendZoneCheckedBox.Text)
+                    foreach (var featObj in sheetMetals)
                     {
-                       
-                        default:
-                            break;
-                        case "KFactor":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
-                                swCustomBendAllowance.KFactor = BendZoneValue;
-                                break;
-                            }
-                        case "Bend Allowance":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
-                                // Unit checking
-
-                                if (UnitSystemCombBox.Text == "IPS")
-                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
-                                else
-                                    BendZoneValue = BendZoneValue / 1000.0;
-
-                                swCustomBendAllowance.BendAllowance = BendZoneValue;
-                                BendZoneValue = BendZoneValue * 1000.0;
-                                break;
-
-                            }
-
-                        case "Bend Deduction":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
-                                // Unit checking
-                                if (UnitSystemCombBox.Text == "IPS")
-                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
-                                else
-                                    BendZoneValue = BendZoneValue / 1000.0;
-
-
-                                swCustomBendAllowance.BendDeduction = BendZoneValue  ;
-                                BendZoneValue = BendZoneValue * 1000.0;
-                                break;
-                            }
-                   }
-                         
-
-                            swSheetMetalFeatureDataFromFolder.SetCustomBendAllowance(swCustomBendAllowance);
-                    bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalFeatureDataFromFolder, swModelDoc, null);
-                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s bend zone value to {1} {3} : {2}.", swSheetMetalFolderFeature.Name, BendZoneCheckedBox.Text == "KFactor" ? BendZoneValue.ToString("F2") : (swModelDoc.LengthUnit == (int)swLengthUnit_e.swINCHES ? MeasuringUnitsConvertor.Length.FromMillimetersToInchs(BendZoneValue) : BendZoneValue).ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
-
-                }
-
-                #endregion
-                #region sheet metal features 
-                // Change kfactor of features from feature manager
-
-                foreach (Feature swFeature in swFeatures)
-                {
-                    dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithKFactorProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
-                    if (swSheetMetalDataFeature == null)
-                        continue;
-                    // missing overrride for bend tables  
-                    CustomBendAllowance swCustomBendAllowance = swSheetMetalDataFeature.GetCustomBendAllowance();
-                    switch (BendZoneCheckedBox.Text)
-                    {
-
-                        default:
-                            break;
-                        case "KFactor":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
-                                swCustomBendAllowance.KFactor = BendZoneValue;
-                                break;
-                            }
-                        case "Bend Allowance":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
-                                // Unit checking
-                                if (UnitSystemCombBox.Text == "IPS")
-                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
-                                else
-                                    BendZoneValue = BendZoneValue / 1000.0;
-
-                                swCustomBendAllowance.BendAllowance = BendZoneValue ;
-                                BendZoneValue = BendZoneValue * 1000.0;
-                                break;
-
-                            }
-
-                        case "Bend Deduction":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
-                                // Unit checking
-                                if (UnitSystemCombBox.Text == "IPS")
-                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
-                                else
-                                    BendZoneValue = BendZoneValue / 1000.0;
-
-                                swCustomBendAllowance.BendDeduction = BendZoneValue;
-                                BendZoneValue = BendZoneValue * 1000.0;
-                                break;
-                            }
+                        var swSheetMetalFeature = (Feature)featObj;
+                        var swSheetMetalFeatureData = (SheetMetalFeatureData)swSheetMetalFeature.GetDefinition();
+                        swSheetMetalFeatureData.SetOverrideDefaultParameter(false);
+                        var ok = swSheetMetalFeature.ModifyDefinition(swSheetMetalFeatureData, swModelDoc, null);
+                        results.Add(string.Format("\t * Making sheet metal {0} inherit from the sheet metal folder : {1}", swSheetMetalFeature.Name, Status(ok)));
                     }
-                    swSheetMetalDataFeature.SetCustomBendAllowance(swCustomBendAllowance);
-                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s bend zone to {1} {3} : {2}.", swFeature.Name, BendZoneCheckedBox.Text == "KFactor" ? BendZoneValue.ToString("F2") : (swModelDoc.LengthUnit == (int)swLengthUnit_e.swINCHES ? MeasuringUnitsConvertor.Length.FromMillimetersToInchs(BendZoneValue) : BendZoneValue).ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
+                }
 
+                var features = swFeatureManager.GetFeatures(false) as object[];
+                if (features == null)
+                    return results;
 
-                    #endregion
-            }
+                foreach (var featObj in features)
+                {
+                    var swFeature = (Feature)featObj;
+                    var typeName = swFeature.GetTypeName2();
 
+                    // Bend features: use default bend radius and bend allowance
+                    if (FeatureTypesInheritingBendParameters.Contains(typeName))
+                    {
+                        dynamic data = swFeature.GetDefinition();
+                        if (data != null)
+                        {
+                            data.UseDefaultBendRadius = true;
+                            data.UseDefaultBendAllowance = true;
+                            bool ok = swFeature.ModifyDefinition((object)data, swModelDoc, null);
+                            results.Add(string.Format("\t * Making {0} inherit parameters from its parent : {1}", swFeature.Name, Status(ok)));
+                        }
+                    }
 
+                    // Base flange driven by a gauge table: remove thickness / radius / k-factor overrides
+                    if (typeName == "SMBaseFlange")
+                    {
+                        dynamic data = swFeature.GetDefinition();
+                        if (data != null && data.UseGaugeTable == true)
+                        {
+                            data.OverrideThickness = false;
+                            data.OverrideRadius = false;
+                            data.OverrideKFactor = false;
+                            bool ok = swFeature.ModifyDefinition((object)data, swModelDoc, null);
+                            results.Add(string.Format("\t * Removing overrides of base flange {0} : {1}", swFeature.Name, Status(ok)));
+                        }
+                    }
 
-                return Results.ToArray<string>();
+                    if (typeName == "Hem")
+                    {
+                        dynamic data = swFeature.GetDefinition();
+                        if (data != null)
+                        {
+                            data.UseDefaultBendAllowance = true;
+                            bool ok = swFeature.ModifyDefinition((object)data, swModelDoc, null);
+                            results.Add(string.Format("\t * Making hem {0} use the default bend allowance : {1}", swFeature.Name, Status(ok)));
+                        }
+                    }
 
+                    if (FeatureTypesWithBendRelief.Contains(typeName))
+                    {
+                        dynamic data = swFeature.GetDefinition();
+                        if (data != null)
+                        {
+                            data.UseDefaultBendRelief = true;
+                            bool ok = swFeature.ModifyDefinition((object)data, swModelDoc, null);
+                            results.Add(string.Format("\t * Making {0} use the default bend relief : {1}", swFeature.Name, Status(ok)));
+                        }
+                    }
+                }
             }
             catch (Exception exception)
             {
-                Results.Add(exception.ToString());
-                return Results.ToArray<string>();
-
+                results.Add(FeatureError("removing overriding parameters", exception));
             }
-
+            return results;
         }
-        private string[] ForceChangeThickness(ModelDoc2 swModelDoc, double Thickness)
 
+        private IEnumerable<string> ChangeThickness(ModelDoc2 swModelDoc, RunSettings settings)
         {
-           
-
-            List<string> Results = new List<string>();
-
-
+            var results = new List<string>();
             try
             {
+                var swSheetMetalFolder = (SheetMetalFolder)swModelDoc.FeatureManager.GetSheetMetalFolder();
+                if (swSheetMetalFolder == null)
+                    return new[] { NoSheetMetalFolder("thickness") };
 
-
-                // Check unit system and convert radius to corresponding value
-                int LengthUnit = swModelDoc.LengthUnit;
-                switch (LengthUnit)
-                {
-                    case (int)swLengthUnit_e.swMM:
-                        {
-                            if (UnitSystemCombBox.Text == "MMGS")
-                            {
-                                
-
-                            }
-
-                            else
-                            {
-                                Thickness = MeasuringUnitsConvertor.Length.FromInchToMillimeters(Thickness);
-                            }
-
-
-                            break;
-                        }
-                    case (int)swLengthUnit_e.swINCHES:
-                        if (UnitSystemCombBox.Text == "IPS")
-                        {
-
-                          
-
-                        }
-                        else
-                        {
-
-                            Thickness = MeasuringUnitsConvertor.Length.FromMillimetersToInchs(Thickness);
-
-
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                 // missing overrride for bend tables 
-                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
-                var swFeatures = swFeatureManager.GetFeatures(false);
-                foreach (Feature swFeature in swFeatures)
-                {
-                    dynamic swSheetMetalDataFeature = swSheetMetalFeatureTypeWithThicknessProperty.Exists(x => x == swFeature.GetTypeName()) ? swFeature.GetDefinition() : null;
-                    if (swSheetMetalDataFeature == null)
-                        continue;
-                    swSheetMetalDataFeature.Thickness = Thickness;
-                    bool FeatureResult = swFeature.ModifyDefinition((object)swSheetMetalDataFeature, swModelDoc, null);
-                    Results.Add(string.Format("\t * FORCE MODE: changing {0}'s thickness to {1} {3} : {2} .", swFeature.Name, Thickness.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
-
-
-                }
-
-
-                return Results.ToArray<string>();
-
-            }
-            catch (Exception exception)
-            {
-
-                return Results.ToArray<string>();
-
-            }
-        }
-        
-        // normal mode: all changes must be done from the sheet metal folder and not the features 
-         
-
-        private string[] ChangeRadius(ModelDoc2 swModelDoc, double radius)
-        {
-
-            
-
-            List<string> Results = new List<string>();
-
-
-            try
-            {
-
-                #region units
-                // Check unit system and convert radius to corresponding value
-                int LengthUnit = (int)swModelDoc.LengthUnit;
-               
-
-                switch (LengthUnit)
-                {
-                    case (int)swLengthUnit_e.swMM:
-                        {
-                            if (UnitSystemCombBox.Text == "MMGS")
-                            {
-                                //radius = radius / 1000.0;
-                               
-                            }
-
-                            else
-                            {
-                                radius = MeasuringUnitsConvertor.Length.FromInchToMillimeters(radius)  ;
-                            }
-
-
-                            break;
-                        }
-                    case (int)swLengthUnit_e.swINCHES:
-                        if (UnitSystemCombBox.Text == "IPS")
-                        {
-
-                            //radius = radius / 1000.0;
-
-                        }
-                        else
-                        {
-
-                            radius = MeasuringUnitsConvertor.Length.FromMillimetersToInchs(radius);
-
-
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                #endregion
-
-                     
-
-                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
-                var swFeatures = swFeatureManager.GetFeatures(false);
-                var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
-            
-                // change sheet metal folder data
-                var swSheetMetalFolder2 = new SheetMetalFolder2(swSheetMetalFolder);
-
-                bool FeatureResult = swSheetMetalFolder2.BendRadius(radius);
-            
-                if (FeatureResult)
+                var ok = new SheetMetalFolder2(swSheetMetalFolder).Thickness(settings.ThicknessMeters);
+                if (ok)
                     swModelDoc.ForceRebuild3(true);
 
-                Results.Add(string.Format("\t *NORMAL MODE: changing {0}'s radius to {1} {3} : {2} .", swSheetMetalFolder.GetFeature().Name, radius.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
-
-
-                 
-
-
-                return Results.ToArray<string>();
-
+                results.Add(string.Format("\t * NORMAL MODE: changing {0}'s thickness to {1} : {2}",
+                    swSheetMetalFolder.GetFeature().Name, FormatLength(settings.ThicknessMeters, settings), Status(ok)));
             }
             catch (Exception exception)
             {
-
-                return Results.ToArray<string>();
-
+                results.Add(FeatureError("changing thickness", exception));
             }
+            return results;
         }
-       
-        private string[] ChangeBendZone(ModelDoc2 swModelDoc, double BendZoneValue)
-        {
-            List<string> Results = new List<string>();
 
+        private IEnumerable<string> ChangeBendZone(ModelDoc2 swModelDoc, RunSettings settings)
+        {
+            var results = new List<string>();
             try
             {
+                var swSheetMetalFolder = (SheetMetalFolder)swModelDoc.FeatureManager.GetSheetMetalFolder();
+                if (swSheetMetalFolder == null)
+                    return new[] { NoSheetMetalFolder("bend zone") };
 
-                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
-                var swFeatures = swFeatureManager.GetFeatures(false);
-                var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
-
-
-                if (!(swSheetMetalFolder == null))
-                {
-                    Feature swSheetMetalFolderFeature = swSheetMetalFolder.GetFeature();
-                    SheetMetalFeatureData swSheetMetalFeatureDataFromFolder = swSheetMetalFolderFeature.GetDefinition();
-                    CustomBendAllowance swCustomBendAllowance = swSheetMetalFeatureDataFromFolder.GetCustomBendAllowance();
-
-                    switch (BendZoneCheckedBox.Text)
-                    {
-                        #region units
-                     
-                        case "KFactor":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
-                                swCustomBendAllowance.KFactor = BendZoneValue;
-                                break;
-                            }
-                        case "Bend Allowance":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
-                                // Unit checking
-
-                                if (UnitSystemCombBox.Text == "IPS")
-                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
-                                else
-                                    BendZoneValue = BendZoneValue / 1000.0;
-
-                                swCustomBendAllowance.BendAllowance = BendZoneValue;
-                                BendZoneValue = BendZoneValue * 1000.0;
-                                break;
-
-                            }
-
-                        case "Bend Deduction":
-                            {
-                                swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
-                                // Unit checking
-
-                                if (UnitSystemCombBox.Text == "IPS")
-                                    BendZoneValue = MeasuringUnitsConvertor.Length.FromInchToMillimeters(BendZoneValue) / 1000.0;
-                                else
-                                    BendZoneValue = BendZoneValue / 1000.0;
-
-
-                                swCustomBendAllowance.BendDeduction = BendZoneValue;
-                                BendZoneValue = BendZoneValue * 1000.0;
-                                break;
-                            }
-
-                        #endregion
-                        default:
-                            break;
-                    }
-                    swSheetMetalFeatureDataFromFolder.SetCustomBendAllowance(swCustomBendAllowance);
-                    bool FeatureResult = swSheetMetalFolderFeature.ModifyDefinition((object)swSheetMetalFeatureDataFromFolder, swModelDoc, null);
-                    Results.Add(string.Format("\t * NORMAL MODE: Changing {0}'s bend zone to {1} {3} : {2}.", swSheetMetalFolderFeature.Name, BendZoneCheckedBox.Text == "KFactor" ? BendZoneValue.ToString("F2") : (swModelDoc.LengthUnit == (int)swLengthUnit_e.swINCHES ? MeasuringUnitsConvertor.Length.FromMillimetersToInchs(BendZoneValue):BendZoneValue).ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE", BendZoneCheckedBox.Text == "KFactor" ? String.Empty : swModelDoc.LengthUnit == 0 ? "mm" : "inch"));
-
-                }
-
-                return Results.ToArray<string>();
-
+                results.Add(ChangeSheetMetalFolderBendZone(swModelDoc, swSheetMetalFolder, settings, "NORMAL MODE"));
             }
             catch (Exception exception)
             {
-                Results.Add(exception.ToString());
-                return Results.ToArray<string>();
-
+                results.Add(FeatureError("changing bend zone", exception));
             }
+            return results;
         }
-      
-        private string[] ChangeThickness(ModelDoc2 swModelDoc, double Thickness)
+
+        private IEnumerable<string> ChangeRadius(ModelDoc2 swModelDoc, RunSettings settings)
         {
- 
-            List<string> Results = new List<string>();
- 
+            var results = new List<string>();
             try
             {
- 
-                #region units
-                // Check unit system and convert radius to corresponding value
-                int LengthUnit = swModelDoc.LengthUnit;
-                switch (LengthUnit)
-                {
-                    case (int)swLengthUnit_e.swMM:
-                        {
-                            if (UnitSystemCombBox.Text == "MMGS")
-                            {
+                var swSheetMetalFolder = (SheetMetalFolder)swModelDoc.FeatureManager.GetSheetMetalFolder();
+                if (swSheetMetalFolder == null)
+                    return new[] { NoSheetMetalFolder("radius") };
 
-
-                            }
-
-                            else
-                            {
-                                Thickness = MeasuringUnitsConvertor.Length.FromInchToMillimeters(Thickness);
-                            }
-
-                            break;
-                        }
-                    case (int)swLengthUnit_e.swINCHES:
-                        if (UnitSystemCombBox.Text == "IPS")
-                        {
-
-
-
-                        }
-                        else
-                        {
-
-                            Thickness = MeasuringUnitsConvertor.Length.FromMillimetersToInchs(Thickness);
-
-
-                        }
-                        break;
-                    default:
-                        break;
-                }
-                #endregion
-
-                
-
-                FeatureManager swFeatureManager = swModelDoc.FeatureManager;
-               
-                var swSheetMetalFolder = (SheetMetalFolder)swFeatureManager.GetSheetMetalFolder();
-                var swSheetMetalFolder2 = new SheetMetalFolder2(swSheetMetalFolder);
-
-                bool FeatureResult = swSheetMetalFolder2.Thickness(Thickness);
-                if (FeatureResult)
+                var ok = new SheetMetalFolder2(swSheetMetalFolder).BendRadius(settings.RadiusMeters);
+                if (ok)
                     swModelDoc.ForceRebuild3(true);
 
-                Results.Add(string.Format("\t * NORMAL MODE: changing {0}'s thickness to {1} {3} : {2} ", swSheetMetalFolder.GetFeature().Name, Thickness.ToString("F2"), FeatureResult ? "SUCCESS" : "FAILURE",swModelDoc.LengthUnit == 0 ? "mm": "inch"));
-                return Results.ToArray<string>();
+                results.Add(string.Format("\t * NORMAL MODE: changing {0}'s radius to {1} : {2}",
+                    swSheetMetalFolder.GetFeature().Name, FormatLength(settings.RadiusMeters, settings), Status(ok)));
             }
-
             catch (Exception exception)
             {
-                return Results.ToArray<string>();
+                results.Add(FeatureError("changing radius", exception));
             }
+            return results;
         }
-
-
 
         #endregion
- 
 
-        private void helpToolStripMenuItem1_Click(object sender, EventArgs e)
+        #region Force mode: changes are written on every feature
+
+        private IEnumerable<string> ForceChangeThickness(ModelDoc2 swModelDoc, RunSettings settings)
         {
-            System.Diagnostics.Process.Start("https://github.com/jliliamen/power-sm/wiki/PowerGeometry");
-        }
-
-        private void FilesTreeView_AfterSelect(object sender, TreeViewEventArgs e)
-        {
-
-        }
-
-        private void RecentToolStripMenu_Click(object sender, EventArgs e)
-        {
-            var RecentDirectory = RecentToolStripMenu.Text;
-            if (System.IO.Directory.Exists(RecentDirectory))
+            var results = new List<string>();
+            try
             {
-                CurrentDirectory = RecentDirectory;
-                ListDirectory(FilesTreeView, CurrentDirectory);
+                foreach (var swFeature in GetFeatures(swModelDoc, FeatureTypesWithThickness))
+                {
+                    dynamic data = swFeature.GetDefinition();
+                    if (data == null)
+                        continue;
+                    data.Thickness = settings.ThicknessMeters;
+                    bool ok = swFeature.ModifyDefinition((object)data, swModelDoc, null);
+                    results.Add(string.Format("\t * FORCE MODE: changing {0}'s thickness to {1} : {2}",
+                        swFeature.Name, FormatLength(settings.ThicknessMeters, settings), Status(ok)));
+                }
+            }
+            catch (Exception exception)
+            {
+                results.Add(FeatureError("changing thickness", exception));
+            }
+            return results;
+        }
 
-                //Get all tree nodes from treeview
-                AllTreeViewNodes = new List<CustomTreeNode>();
-                GetAllNodesFromTreeView(FilesTreeView, AllTreeViewNodes);
+        private IEnumerable<string> ForceChangeBendZone(ModelDoc2 swModelDoc, RunSettings settings)
+        {
+            var results = new List<string>();
+            try
+            {
+                // Sheet metal folder first
+                var swSheetMetalFolder = (SheetMetalFolder)swModelDoc.FeatureManager.GetSheetMetalFolder();
+                if (swSheetMetalFolder != null)
+                    results.Add(ChangeSheetMetalFolderBendZone(swModelDoc, swSheetMetalFolder, settings, "FORCE MODE"));
 
-                // Select all nodes
-                selectAllToolStripMenuItem.PerformClick();
+                // Then every feature that carries its own bend allowance
+                foreach (var swFeature in GetFeatures(swModelDoc, FeatureTypesWithKFactor))
+                {
+                    dynamic data = swFeature.GetDefinition();
+                    if (data == null)
+                        continue;
+                    CustomBendAllowance swCustomBendAllowance = data.GetCustomBendAllowance();
+                    ApplyBendZone(swCustomBendAllowance, settings);
+                    data.SetCustomBendAllowance(swCustomBendAllowance);
+                    bool ok = swFeature.ModifyDefinition((object)data, swModelDoc, null);
+                    results.Add(string.Format("\t * FORCE MODE: changing {0}'s {1} to {2} : {3}",
+                        swFeature.Name, BendZoneDescription(settings), FormatBendZone(settings), Status(ok)));
+                }
+            }
+            catch (Exception exception)
+            {
+                results.Add(FeatureError("changing bend zone", exception));
+            }
+            return results;
+        }
 
+        private IEnumerable<string> ForceChangeRadius(ModelDoc2 swModelDoc, RunSettings settings)
+        {
+            var results = new List<string>();
+            double swSheetMetalThickness = 0;
+            var radius = settings.RadiusMeters;
+
+            try
+            {
+                foreach (var swFeature in GetFeatures(swModelDoc, FeatureTypesWithRadius))
+                {
+                    dynamic data = swFeature.GetDefinition();
+                    if (data == null)
+                        continue;
+
+                    if (data is SheetMetalFeatureData)
+                    {
+                        data.SetOverrideDefaultParameter(true);
+                        swSheetMetalThickness = data.Thickness;
+                    }
+
+                    if (data is OneBendFeatureData)
+                        data.UseDefaultBendRadius = false;
+
+                    if (data is BaseFlangeFeatureData)
+                        data.OverrideRadius = true;
+
+                    if (data is EdgeFlangeFeatureData)
+                    {
+                        data.UseDefaultBendRadius = false;
+
+                        // Edge flange positioned "bend outside": offset the flange so the outside
+                        // dimensions of the part are kept when the radius changes.
+                        if (settings.ForceDimensionalRespect
+                            && data.PositionType == (int)swFlangePositionTypes_e.swFlangePositionTypeBendOutside)
+                        {
+                            data.UsePositionOffset = true;
+                            data.PositionOffsetType = (int)swFlangeOffsetTypes_e.swFlangeOffsetBlind;
+                            double difference = radius - (double)data.BendRadius; // new radius - old radius
+                            if (difference >= 0)
+                                data.ReversePositionOffset = true;
+                            data.PositionOffsetDistance = difference + 0.5 * swSheetMetalThickness;
+                        }
+                    }
+
+                    data.BendRadius = radius;
+                    bool ok = swFeature.ModifyDefinition((object)data, swModelDoc, null);
+                    results.Add(string.Format("\t * FORCE MODE: changing {0}'s radius to {1} : {2}",
+                        swFeature.Name, FormatLength(radius, settings), Status(ok)));
+                }
+            }
+            catch (Exception exception)
+            {
+                results.Add(FeatureError("changing radius", exception));
+            }
+            return results;
+        }
+
+        #endregion
+
+        #region Helpers
+
+        private static IEnumerable<Feature> GetFeatures(ModelDoc2 swModelDoc, string[] typeNames)
+        {
+            var features = swModelDoc.FeatureManager.GetFeatures(false) as object[];
+            if (features == null)
+                return Enumerable.Empty<Feature>();
+            return features.Cast<Feature>().Where(f => typeNames.Contains((string)f.GetTypeName())).ToList();
+        }
+
+        private static string ChangeSheetMetalFolderBendZone(ModelDoc2 swModelDoc, SheetMetalFolder swSheetMetalFolder, RunSettings settings, string mode)
+        {
+            Feature swSheetMetalFolderFeature = swSheetMetalFolder.GetFeature();
+            var data = (SheetMetalFeatureData)swSheetMetalFolderFeature.GetDefinition();
+            CustomBendAllowance swCustomBendAllowance = data.GetCustomBendAllowance();
+            ApplyBendZone(swCustomBendAllowance, settings);
+            data.SetCustomBendAllowance(swCustomBendAllowance);
+            var ok = swSheetMetalFolderFeature.ModifyDefinition(data, swModelDoc, null);
+            return string.Format("\t * {0}: changing {1}'s {2} to {3} : {4}",
+                mode, swSheetMetalFolderFeature.Name, BendZoneDescription(settings), FormatBendZone(settings), Status(ok));
+        }
+
+        private static void ApplyBendZone(CustomBendAllowance swCustomBendAllowance, RunSettings settings)
+        {
+            switch (settings.BendZoneType)
+            {
+                case BendZoneKFactor:
+                    swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceKFactor;
+                    swCustomBendAllowance.KFactor = settings.BendZoneValue;
+                    break;
+                case BendZoneAllowance:
+                    swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDirect;
+                    swCustomBendAllowance.BendAllowance = settings.BendZoneValue;
+                    break;
+                case BendZoneDeduction:
+                    swCustomBendAllowance.Type = (int)swBendAllowanceTypes_e.swBendAllowanceDeduction;
+                    swCustomBendAllowance.BendDeduction = settings.BendZoneValue;
+                    break;
             }
         }
 
-        private void PowerGeometryForm_Activated(object sender, EventArgs e)
+        private static string BendZoneDescription(RunSettings settings)
         {
-            // Load recent directory
-            RecentToolStripMenu.Text = Convert.ToString(System.Configuration.ConfigurationSettings.AppSettings["RecentDirectory"]);
+            switch (settings.BendZoneType)
+            {
+                case BendZoneAllowance: return "bend allowance";
+                case BendZoneDeduction: return "bend deduction";
+                default: return "k-factor";
+            }
         }
+
+        private static string FormatBendZone(RunSettings settings)
+        {
+            return settings.BendZoneType == BendZoneKFactor
+                ? settings.BendZoneValue.ToString("0.####", CultureInfo.InvariantCulture)
+                : FormatLength(settings.BendZoneValue, settings);
+        }
+
+        private static string FormatLength(double meters, RunSettings settings)
+        {
+            return string.Format(CultureInfo.InvariantCulture, "{0:0.####} {1}",
+                MeasuringUnitsConvertor.Length.FromMeters(meters, settings.UnitSystem),
+                MeasuringUnitsConvertor.Length.UnitLabel(settings.UnitSystem));
+        }
+
+        private static string Status(bool ok)
+        {
+            return ok ? "SUCCESS" : "FAILURE";
+        }
+
+        private static string NoSheetMetalFolder(string what)
+        {
+            return string.Format("\t * Skipping {0}: no sheet metal folder found (not a sheet metal part?)", what);
+        }
+
+        private static string FeatureError(string action, Exception exception)
+        {
+            return string.Format("\t * ERROR while {0}: {1}", action, exception.Message);
+        }
+
+        #endregion
+
+        #endregion
     }
+
     public class CustomTreeNode : TreeNode
     {
         public string FullFilePath { get; set; }
 
+        /// <summary>True for part files, false for folders.</summary>
+        public bool IsPart { get; private set; }
 
-        public CustomTreeNode(string text, int imageindex, int selectedimageIndex, string _FullFilePath)
+        public CustomTreeNode(string text, int imageindex, int selectedimageIndex, string fullFilePath, bool isPart)
         {
-            base.Text = text;
-            base.Name = text;
-            base.SelectedImageIndex = selectedimageIndex;
-            base.ImageIndex = imageindex;
-            FullFilePath = _FullFilePath;
+            Text = text;
+            Name = text;
+            SelectedImageIndex = selectedimageIndex;
+            ImageIndex = imageindex;
+            FullFilePath = fullFilePath;
+            IsPart = isPart;
         }
     }
 
     public class OpenFileException : Exception
     {
-        bool warning;
-        int exception_warning_error;
-        public OpenFileException(int _exception_warning_error, bool _warning)
-        {
+        private readonly bool warning;
+        private readonly int code;
 
-            exception_warning_error = _exception_warning_error;
-            warning = _warning;
+        public OpenFileException(int errorOrWarningCode, bool isWarning)
+        {
+            code = errorOrWarningCode;
+            warning = isWarning;
         }
+
         public override string Message
         {
             get
             {
-                if (warning)
-                {
-                    swFileLoadWarning_e error = (swFileLoadWarning_e)exception_warning_error;
-                    return error.ToString().Replace('_', ' ').Replace("sw", "SolidWorks ");
-                }
-                else
-                {
-                    swFileLoadError_e error = (swFileLoadError_e)exception_warning_error;
-                    return error.ToString().Replace('_', ' ').Replace("sw", "SolidWorks ");
-                }
-
+                var text = warning
+                    ? ((swFileLoadWarning_e)code).ToString()
+                    : ((swFileLoadError_e)code).ToString();
+                return text.Replace('_', ' ').Replace("sw", "SOLIDWORKS ");
             }
         }
-
     }
-
-
-
 }

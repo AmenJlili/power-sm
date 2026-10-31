@@ -6,12 +6,12 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 [assembly: AssemblyTitle("PowerSM")]
-[assembly: AssemblyDescription("Add-in for SolidWorks")]
+[assembly: AssemblyDescription("Sheet metal add-in for SOLIDWORKS: batch change bend radius, thickness and K-factor / bend allowance / bend deduction.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("amen@bluebyte.biz")]
+[assembly: AssemblyCompany("Blue Byte Systems Inc.")]
 [assembly: AssemblyProduct("PowerSM")]
-[assembly: AssemblyCopyright("Blue Byte Software")]
-[assembly: AssemblyTrademark("Blue Byte Software")]
+[assembly: AssemblyCopyright("Copyright © 2015-2026 Blue Byte Systems Inc.")]
+[assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible 
